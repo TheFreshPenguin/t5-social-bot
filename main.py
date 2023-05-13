@@ -128,11 +128,7 @@ def main() -> None:
     dispatcher.add_handler(MessageHandler(~Filters.command, echo))
 
     # Start the Bot
-    updater.start_webhook(listen="0.0.0.0",
-                          port=int(os.environ.get('PORT', 80)),
-                          #url_path=telegram_bot_token,
-                          #webhook_url=+ telegram_bot_token
-                          )
+    updater.start_polling()
 
     # Run the bot until you press Ctrl-C
     updater.idle()
