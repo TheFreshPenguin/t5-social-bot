@@ -1,4 +1,5 @@
 import logging
+import os
 
 from telegram import Update, ForceReply, InlineKeyboardMarkup, InlineKeyboardButton, ParseMode
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
@@ -106,10 +107,10 @@ def button_tap(update: Update, context: CallbackContext) -> None:
 
 
 def main() -> None:
-    with open('secret.txt', 'r') as file:
-        telegram_secret_token = file.read()
+#    with open('secret.txt', 'r') as file:
+#        telegram_secret_token = file.read()
 
-    updater = Updater(telegram_secret_token)
+    updater = Updater(os.environ['telegram_token'])
 
     # Get the dispatcher to register handlers
     # Then, we register each handler and the conditions the update must meet to trigger it
