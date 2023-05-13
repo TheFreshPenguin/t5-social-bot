@@ -128,6 +128,7 @@ def main() -> None:
     dispatcher.add_handler(MessageHandler(~Filters.command, echo))
 
     # Start the Bot
+    logging.info('start_polling')
     updater.start_polling()
 
     # Run the bot until you press Ctrl-C
