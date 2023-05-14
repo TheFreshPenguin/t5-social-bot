@@ -1,22 +1,33 @@
 import logging
 import os
 
-from telegram import Update, ForceReply, InlineKeyboardMarkup, InlineKeyboardButton, ParseMode
+from telegram import Update, ForceReply, InlineKeyboardMarkup, InlineKeyboardButton, ParseMode, KeyboardButton,ReplyKeyboardMarkup, ReplyMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
 
 logger = logging.getLogger(__name__)
+
+# telegram token
+if os.environ.get('is_prod') == 'True':
+    TELEGRAM_TOKEN = os.environ['telegram_token']
+else:
+    with open('secret.txt', 'r') as file:
+        TELEGRAM_TOKEN = file.read()
 
 # Store bot screaming status
 screaming = False
 
 # Pre-assign menu text
-FIRST_MENU = "<b>Menu 1</b>\n\nA beautiful menu with a shiny inline button."
-SECOND_MENU = "<b>Menu 2</b>\n\nA better menu with even more shiny inline buttons."
-
+MAIN_MENU = "What do you want to do?"
+SIGNED_UP_STATUS = "Cool! You signed up. Now it's just a matter of you showing up on time. Enjoy!\n" \
+                   "The following community members are coming:\n"
 # Pre-assign button text
 NEXT_BUTTON = "Next"
 BACK_BUTTON = "Back"
 TUTORIAL_BUTTON = "Tutorial"
+
+SIGN_UP_POKER_BUTTON = "Sign up for this Sunday's Poker Night ♦♠"
+CREATE_TRIVIA_TEAM = "Create a Trivia Team for this Friday's Trivia 🤓✒"
+CHECK_POINTS = "Check your Community Points balance 📄"
 
 # Build keyboards
 FIRST_MENU_MARKUP = InlineKeyboardMarkup([[
@@ -27,6 +38,14 @@ SECOND_MENU_MARKUP = InlineKeyboardMarkup([
     [InlineKeyboardButton(TUTORIAL_BUTTON, url="https://core.telegram.org/bots/api")]
 ])
 
+MAIN_MENU_MARKUP = InlineKeyboardMarkup([
+    [InlineKeyboardButton(SIGN_UP_POKER_BUTTON, callback_data=SIGN_UP_POKER_BUTTON)],
+    [InlineKeyboardButton(CREATE_TRIVIA_TEAM, callback_data=CREATE_TRIVIA_TEAM)],
+    [InlineKeyboardButton(CHECK_POINTS, callback_data=CHECK_POINTS)]
+])
+
+#Poker participants
+poker_participants = []
 
 def echo(update: Update, context: CallbackContext) -> None:
     """
@@ -36,17 +55,27 @@ def echo(update: Update, context: CallbackContext) -> None:
     # Print to console
     print(f'{update.message.from_user.first_name} wrote {update.message.text}')
 
-    if screaming and update.message.text:
-        context.bot.send_message(
-            update.message.chat_id,
-            update.message.text.upper(),
-            # To preserve the markdown, we attach entities (bold, italic...)
-            entities=update.message.entities
-        )
-    else:
-        # This is equivalent to forwarding, without the sender's name
-        update.message.copy(update.message.chat_id)
+    context.bot.send_message(
+        chat_id=update.message.chat_id,
+        text="Welcome to T5 Social !\n"
+        "BeeDeeBeeBoop 🤖 Hi I'm T5 Social's Telegram bot. With me, you can create a team for Trivia Night, book a spot \n"
+        "for the Poker Tournament on Sunday, check you community points and many more!!\n"
+        "Note that I am still a Demo. Many updates to come ❤️"
+    )
 
+    with open('events_of_the_week.txt', 'r') as file:
+        context.bot.send_message(
+            chat_id=update.message.chat_id,
+            text=file.read(),
+            parse_mode="MarkdownV2"
+        )
+
+    context.bot.send_message(
+        update.message.from_user.id,
+        MAIN_MENU,
+        parse_mode=ParseMode.HTML,
+        reply_markup=MAIN_MENU_MARKUP
+    )
 
 def scream(update: Update, context: CallbackContext) -> None:
     """
@@ -94,23 +123,34 @@ def button_tap(update: Update, context: CallbackContext) -> None:
     elif data == BACK_BUTTON:
         text = FIRST_MENU
         markup = FIRST_MENU_MARKUP
+    elif data == SIGN_UP_POKER_BUTTON:
+        if update.callback_query.from_user.username in poker_participants:
+            text = "You already signed up!"
+        else:
+            poker_participants.append(update.callback_query.from_user.username)
+            text = SIGNED_UP_STATUS+'\n -'.join(map(str, poker_participants))
+
+        markup = MAIN_MENU_MARKUP
 
     # Close the query to end the client-side loading animation
     update.callback_query.answer()
 
-    # Update message content with corresponding menu section
-    update.callback_query.message.edit_text(
-        text,
-        ParseMode.HTML,
-        reply_markup=markup
+    context.bot.send_message(
+        chat_id=update.callback_query.from_user.id,
+        text=text,
+    )
+
+    context.bot.send_message(
+        chat_id=update.callback_query.from_user.id,
+        text=MAIN_MENU,
+        parse_mode=ParseMode.HTML,
+        reply_markup=MAIN_MENU_MARKUP
     )
 
 
-def main() -> None:
-#    with open('secret.txt', 'r') as file:
-#        telegram_secret_token = file.read()
 
-    updater = Updater(os.environ['telegram_token'])
+def main() -> None:
+    updater = Updater(TELEGRAM_TOKEN)
 
     # Get the dispatcher to register handlers
     # Then, we register each handler and the conditions the update must meet to trigger it
