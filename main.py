@@ -77,6 +77,29 @@ def echo(update: Update, context: CallbackContext) -> None:
         reply_markup=MAIN_MENU_MARKUP
     )
 
+def start(update: Update, context: CallbackContext) -> None:
+    context.bot.send_message(
+        chat_id=update.message.chat_id,
+        text="Welcome to T5 Social !\n"
+             "BeeDeeBeeBoop 🤖 Hi I'm T5 Social's Telegram bot. With me, you can create a team for Trivia Night, book a spot \n"
+             "for the Poker Tournament on Sunday, check you community points and many more!!\n"
+             "Note that I am still a Demo. Many updates to come ❤️"
+    )
+
+    with open('events_of_the_week.txt', 'r') as file:
+        context.bot.send_message(
+            chat_id=update.message.chat_id,
+            text=file.read(),
+            parse_mode="MarkdownV2"
+        )
+
+    context.bot.send_message(
+        update.message.from_user.id,
+        MAIN_MENU,
+        parse_mode=ParseMode.HTML,
+        reply_markup=MAIN_MENU_MARKUP
+    )
+
 def scream(update: Update, context: CallbackContext) -> None:
     """
     This function handles the /scream command
@@ -160,6 +183,7 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("scream", scream))
     dispatcher.add_handler(CommandHandler("whisper", whisper))
     dispatcher.add_handler(CommandHandler("menu", menu))
+    dispatcher.add_handler(CommandHandler("start", start))
 
     # Register handler for inline buttons
     dispatcher.add_handler(CallbackQueryHandler(button_tap))
