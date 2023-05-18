@@ -18,7 +18,7 @@ screaming = False
 
 # Pre-assign menu text
 MAIN_MENU = "What do you want to do?"
-SIGNED_UP_STATUS = "Cool! You signed up. Now it's just a matter of you showing up on time. Enjoy!\n" \
+SIGNED_UP_STATUS = "Cool\! You signed up\. Now it's just a matter of you showing up on time\. Enjoy\!\n" \
                    "The following community members are coming:\n"
 # Pre-assign button text
 NEXT_BUTTON = "Next"
@@ -28,6 +28,7 @@ TUTORIAL_BUTTON = "Tutorial"
 SIGN_UP_POKER_BUTTON = "Sign up for this Sunday's Poker Night ♦♠"
 CREATE_TRIVIA_TEAM = "Create a Trivia Team for this Friday's Trivia 🤓✒"
 CHECK_POINTS = "Check your Community Points balance 📄"
+TRIVIA_HALL_OF_FAME = "Trivia Hall-Of-Fame 🥇"
 
 # Build keyboards
 FIRST_MENU_MARKUP = InlineKeyboardMarkup([[
@@ -39,8 +40,9 @@ SECOND_MENU_MARKUP = InlineKeyboardMarkup([
 ])
 
 MAIN_MENU_MARKUP = InlineKeyboardMarkup([
-    [InlineKeyboardButton(SIGN_UP_POKER_BUTTON, callback_data=SIGN_UP_POKER_BUTTON)],
+    [InlineKeyboardButton(TRIVIA_HALL_OF_FAME, callback_data=TRIVIA_HALL_OF_FAME)],
     [InlineKeyboardButton(CREATE_TRIVIA_TEAM, callback_data=CREATE_TRIVIA_TEAM)],
+    [InlineKeyboardButton(SIGN_UP_POKER_BUTTON, callback_data=SIGN_UP_POKER_BUTTON)],
     [InlineKeyboardButton(CHECK_POINTS, callback_data=CHECK_POINTS)]
 ])
 
@@ -67,7 +69,7 @@ def echo(update: Update, context: CallbackContext) -> None:
         context.bot.send_message(
             chat_id=update.message.chat_id,
             text=file.read(),
-            parse_mode="MarkdownV2"
+            parse_mode="HTML"
         )
 
     context.bot.send_message(
@@ -148,19 +150,30 @@ def button_tap(update: Update, context: CallbackContext) -> None:
         markup = FIRST_MENU_MARKUP
     elif data == SIGN_UP_POKER_BUTTON:
         if update.callback_query.from_user.username in poker_participants:
-            text = "You already signed up!"
+            text = "You already signed up"
         else:
             poker_participants.append(update.callback_query.from_user.username)
             text = SIGNED_UP_STATUS+'\n -'.join(map(str, poker_participants))
 
         markup = MAIN_MENU_MARKUP
-
+    elif data == CHECK_POINTS:
+        text = "you have *55* Community Points left to spend at the bar"
+        markup = MAIN_MENU_MARKUP
+    elif data == TRIVIA_HALL_OF_FAME:
+        context.bot.send_photo(
+            chat_id=update.callback_query.from_user.id,
+            photo="https://i.ibb.co/y0QtMQY/img.png",
+        )
+        text = "Compete with a registered team to be on the Hall Of Fame"
+        #with open('hall_of_fame.html', 'r', encoding="utf-8") as file:
+        #    text = file.read()
     # Close the query to end the client-side loading animation
     update.callback_query.answer()
 
     context.bot.send_message(
         chat_id=update.callback_query.from_user.id,
         text=text,
+        parse_mode="MarkdownV2",
     )
 
     context.bot.send_message(
