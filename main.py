@@ -4,6 +4,7 @@ import os
 from telegram import Update, ForceReply, InlineKeyboardMarkup, InlineKeyboardButton, ParseMode, KeyboardButton,ReplyKeyboardMarkup, ReplyMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
 
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # telegram token
@@ -141,6 +142,8 @@ def button_tap(update: Update, context: CallbackContext) -> None:
     data = update.callback_query.data
     text = ''
     markup = None
+
+    logger.debug(f'{update.callback_query.from_user.username} tapped on {data}')
 
     if data == NEXT_BUTTON:
         text = SECOND_MENU
