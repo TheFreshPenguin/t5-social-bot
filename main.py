@@ -4,6 +4,8 @@ import os
 from telegram import Update, ForceReply, InlineKeyboardMarkup, InlineKeyboardButton, ParseMode, KeyboardButton,ReplyKeyboardMarkup, ReplyMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
 
+from prompt_parser import parse
+
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -14,19 +16,17 @@ else:
     with open('secret.txt', 'r') as file:
         TELEGRAM_TOKEN = file.read()
 
-# Store bot screaming status
-screaming = False
+prompts = parse("resources/prompts.txt")
 
 # Pre-assign menu text
-MAIN_MENU = "What do you want to do?"
-SIGNED_UP_STATUS = "Cool\! You signed up\. Now it's just a matter of you showing up on time\. Enjoy\!\n" \
-                   "The following community members are coming:\n"
+MAIN_MENU = prompts.get("main_menu")
+SIGNED_UP_STATUS = prompts.get("signed_up_status")
 
 # Pre-assign button text
-SIGN_UP_POKER_BUTTON = "Sign up for this Sunday's Poker Night ♦♠"
-CREATE_TRIVIA_TEAM = "Create a Trivia Team for this Friday's Trivia 🤓✒"
-CHECK_POINTS = "Check your Community Points balance 📄"
-TRIVIA_HALL_OF_FAME = "Trivia Hall-Of-Fame 🥇"
+SIGN_UP_POKER_BUTTON = prompts.get("sign_up_poker_button")
+CREATE_TRIVIA_TEAM = prompts.get("create_trivia_team")
+CHECK_POINTS = prompts.get("check_points")
+TRIVIA_HALL_OF_FAME = prompts.get("trivia_hall_of_fame")
 
 # Build keyboards
 MAIN_MENU_MARKUP = InlineKeyboardMarkup([
@@ -42,10 +42,7 @@ poker_participants = []
 def start(update: Update, context: CallbackContext) -> None:
     context.bot.send_message(
         chat_id=update.message.chat_id,
-        text="Welcome to T5 Social !\n"
-             "BeeDeeBeeBoop 🤖 Hi I'm T5 Social's Telegram bot. With me, you can create a team for Trivia Night, book a spot \n"
-             "for the Poker Tournament on Sunday, check you community points and many more!!\n"
-             "Note that I am still a Demo. Many updates to come ❤️"
+        text=prompts.get("welcome")
     )
 
     with open('events_of_the_week.txt', 'r') as file:
@@ -61,19 +58,6 @@ def start(update: Update, context: CallbackContext) -> None:
         parse_mode=ParseMode.HTML,
         reply_markup=MAIN_MENU_MARKUP
     )
-
-def menu(update: Update, context: CallbackContext) -> None:
-    """
-    This handler sends a menu with the inline buttons we pre-assigned above
-    """
-
-    context.bot.send_message(
-        update.message.from_user.id,
-        FIRST_MENU,
-        parse_mode=ParseMode.HTML,
-        reply_markup=FIRST_MENU_MARKUP
-    )
-
 
 def button_tap(update: Update, context: CallbackContext) -> None:
     """
@@ -91,7 +75,7 @@ def button_tap(update: Update, context: CallbackContext) -> None:
             text = "You already signed up"
         else:
             poker_participants.append(update.callback_query.from_user.username)
-            text = SIGNED_UP_STATUS+'\n -'.join(map(str, poker_participants))
+            text = SIGNED_UP_STATUS+'\n \- '+'\n \- '.join(map(str, poker_participants))
 
         markup = MAIN_MENU_MARKUP
     elif data == CHECK_POINTS:
@@ -103,8 +87,6 @@ def button_tap(update: Update, context: CallbackContext) -> None:
             photo="https://i.ibb.co/y0QtMQY/img.png",
         )
         text = "Compete with a registered team to be on the Hall Of Fame"
-        #with open('hall_of_fame.html', 'r', encoding="utf-8") as file:
-        #    text = file.read()
     # Close the query to end the client-side loading animation
     update.callback_query.answer()
 
