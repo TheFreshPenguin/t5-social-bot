@@ -27,6 +27,7 @@ else:
 
 #prompts
 prompts = parse("resources/prompts.txt")
+logging.info(prompts)
 
 # menu navigation state
 STATE = None
