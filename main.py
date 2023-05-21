@@ -21,25 +21,14 @@ screaming = False
 MAIN_MENU = "What do you want to do?"
 SIGNED_UP_STATUS = "Cool\! You signed up\. Now it's just a matter of you showing up on time\. Enjoy\!\n" \
                    "The following community members are coming:\n"
-# Pre-assign button text
-NEXT_BUTTON = "Next"
-BACK_BUTTON = "Back"
-TUTORIAL_BUTTON = "Tutorial"
 
+# Pre-assign button text
 SIGN_UP_POKER_BUTTON = "Sign up for this Sunday's Poker Night ♦♠"
 CREATE_TRIVIA_TEAM = "Create a Trivia Team for this Friday's Trivia 🤓✒"
 CHECK_POINTS = "Check your Community Points balance 📄"
 TRIVIA_HALL_OF_FAME = "Trivia Hall-Of-Fame 🥇"
 
 # Build keyboards
-FIRST_MENU_MARKUP = InlineKeyboardMarkup([[
-    InlineKeyboardButton(NEXT_BUTTON, callback_data=NEXT_BUTTON)
-]])
-SECOND_MENU_MARKUP = InlineKeyboardMarkup([
-    [InlineKeyboardButton(BACK_BUTTON, callback_data=BACK_BUTTON)],
-    [InlineKeyboardButton(TUTORIAL_BUTTON, url="https://core.telegram.org/bots/api")]
-])
-
 MAIN_MENU_MARKUP = InlineKeyboardMarkup([
     [InlineKeyboardButton(TRIVIA_HALL_OF_FAME, callback_data=TRIVIA_HALL_OF_FAME)],
     [InlineKeyboardButton(CREATE_TRIVIA_TEAM, callback_data=CREATE_TRIVIA_TEAM)],
@@ -49,36 +38,6 @@ MAIN_MENU_MARKUP = InlineKeyboardMarkup([
 
 #Poker participants
 poker_participants = []
-
-def echo(update: Update, context: CallbackContext) -> None:
-    """
-    This function would be added to the dispatcher as a handler for messages coming from the Bot API
-    """
-
-    # Print to console
-    print(f'{update.message.from_user.first_name} wrote {update.message.text}')
-
-    context.bot.send_message(
-        chat_id=update.message.chat_id,
-        text="Welcome to T5 Social !\n"
-        "BeeDeeBeeBoop 🤖 Hi I'm T5 Social's Telegram bot. With me, you can create a team for Trivia Night, book a spot \n"
-        "for the Poker Tournament on Sunday, check you community points and many more!!\n"
-        "Note that I am still a Demo. Many updates to come ❤️"
-    )
-
-    with open('events_of_the_week.txt', 'r') as file:
-        context.bot.send_message(
-            chat_id=update.message.chat_id,
-            text=file.read(),
-            parse_mode="HTML"
-        )
-
-    context.bot.send_message(
-        update.message.from_user.id,
-        MAIN_MENU,
-        parse_mode=ParseMode.HTML,
-        reply_markup=MAIN_MENU_MARKUP
-    )
 
 def start(update: Update, context: CallbackContext) -> None:
     context.bot.send_message(
@@ -102,24 +61,6 @@ def start(update: Update, context: CallbackContext) -> None:
         parse_mode=ParseMode.HTML,
         reply_markup=MAIN_MENU_MARKUP
     )
-
-def scream(update: Update, context: CallbackContext) -> None:
-    """
-    This function handles the /scream command
-    """
-
-    global screaming
-    screaming = True
-
-
-def whisper(update: Update, context: CallbackContext) -> None:
-    """
-    This function handles /whisper command
-    """
-
-    global screaming
-    screaming = False
-
 
 def menu(update: Update, context: CallbackContext) -> None:
     """
@@ -145,13 +86,7 @@ def button_tap(update: Update, context: CallbackContext) -> None:
 
     logger.debug(f'{update.callback_query.from_user.username} tapped on {data}')
 
-    if data == NEXT_BUTTON:
-        text = SECOND_MENU
-        markup = SECOND_MENU_MARKUP
-    elif data == BACK_BUTTON:
-        text = FIRST_MENU
-        markup = FIRST_MENU_MARKUP
-    elif data == SIGN_UP_POKER_BUTTON:
+    if data == SIGN_UP_POKER_BUTTON:
         if update.callback_query.from_user.username in poker_participants:
             text = "You already signed up"
         else:
@@ -196,16 +131,13 @@ def main() -> None:
     dispatcher = updater.dispatcher
 
     # Register commands
-    dispatcher.add_handler(CommandHandler("scream", scream))
-    dispatcher.add_handler(CommandHandler("whisper", whisper))
-    dispatcher.add_handler(CommandHandler("menu", menu))
     dispatcher.add_handler(CommandHandler("start", start))
 
     # Register handler for inline buttons
     dispatcher.add_handler(CallbackQueryHandler(button_tap))
 
     # Echo any message that is not a command
-    dispatcher.add_handler(MessageHandler(~Filters.command, echo))
+    # dispatcher.add_handler(MessageHandler(~Filters.command, echo))
 
     # Start the Bot
     logging.info('start_polling')
