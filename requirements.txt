@@ -1,7 +1,8 @@
 APScheduler==3.6.3
-backports.zoneinfo==0.2.1;python_version<"3.9"
+backports.zoneinfo==0.2.1
 cachetools==4.2.2
 certifi==2023.5.7
+psycopg2==2.9.6
 python-telegram-bot==13.12
 pytz==2023.3
 pytz-deprecation-shim==0.1.0.post0
