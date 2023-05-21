@@ -57,3 +57,19 @@ Check your Community Points balance 📄
 #-- trivia_hall_of_fame
 
 Trivia Hall-Of-Fame 🥇
+
+#-- manage_trivia_teams
+
+Manage your Trivia teams
+
+#-- see_your_teams
+
+See all the teams you are in
+
+#-- go_back_main_menu
+
+Go back to the main menu
+
+#-- check_trivia_score
+
+check all your teams scores !

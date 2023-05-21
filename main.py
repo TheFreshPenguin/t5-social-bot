@@ -4,6 +4,8 @@ import os
 from telegram import Update, ForceReply, InlineKeyboardMarkup, InlineKeyboardButton, ParseMode, KeyboardButton,ReplyKeyboardMarkup, ReplyMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
 
+import psycopg2
+
 from prompt_parser import parse
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -12,10 +14,18 @@ logger = logging.getLogger(__name__)
 # telegram token
 if os.environ.get('is_prod') == 'True':
     TELEGRAM_TOKEN = os.environ['telegram_token']
+    DATABASE_URL = os.environ['DATABASE_URL']
 else:
     with open('secret.txt', 'r') as file:
         TELEGRAM_TOKEN = file.read()
 
+    with open('db_secret.txt', 'r') as file:
+        DATABASE_URL = file.read()
+
+#db_connection
+
+
+#prompts
 prompts = parse("resources/prompts.txt")
 
 # menu navigation state
@@ -76,9 +86,18 @@ def reply(update, context):
     global STATE
     user_input = update.message.text
     if STATE == CREATE_TRIVIA_TEAM:
+        con = psycopg2.connect(DATABASE_URL)
+        cursor_obj = con.cursor()
+        cursor_obj.execute(f'INSERT INTO "public"."trivia_teams" ("name", "team_leader_id", "team_leader_name") VALUES'
+                           f'(\'{update.message.text}\', {update.message.from_user.id}, \'{update.message.from_user.username}\');')
+
+        con.commit()
+        if con is not None:
+            con.close()
+
         context.bot.send_message(
             update.message.from_user.id,
-            text="team created",
+            text=f"team {update.message.text} created",
             parse_mode="MarkdownV2",
             reply_markup=MANAGE_TRIVIA_TEAMS_MENU_MARKUP
         )
@@ -125,6 +144,19 @@ def button_tap(update: Update, context: CallbackContext) -> None:
         text = "write down your team's name"
         markup = None
         STATE = CREATE_TRIVIA_TEAM
+
+    elif data == SEE_TEAMS:
+        markup = MANAGE_TRIVIA_TEAMS_MENU_MARKUP
+
+        con = psycopg2.connect(DATABASE_URL)
+        cursor_obj = con.cursor()
+        cursor_obj.execute(f'SELECT * FROM trivia_teams WHERE team_leader_id = {update.callback_query.from_user.id}')
+        result = cursor_obj.fetchall()
+        con.close()
+
+        text = "Your teams:\n"
+        for t in result:
+            text += f"\-\> *{t[1]}* \- created by [{t[3]}](tg://user?id={t[2]})\n"
     # Close the query to end the client-side loading animation
     update.callback_query.answer()
 
