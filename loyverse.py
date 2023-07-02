@@ -109,6 +109,26 @@ def remove_points(username, points):
 
     return update_total_points(customer, new_total_points)
 
+def donate_points(sender_username, recipient_username, points):
+    if not is_number(points):
+        raise Exception("donated points must be a number")
+    if points <= 0:
+        raise Exception("donated points must be non-zero positive")
+
+    customers = get_customers(READ_ALL_CUSTOMERS_ENDPOINT, LOYVERSE_TOKEN)
+
+    sender_customer = customers.get(sender_username)
+    sender_new_total_points = sender_customer.get("total_points") - points
+
+    if sender_new_total_points < 0:
+        raise Exception("you cannot donate more points than you already have")
+
+    recipient_customer = customers.get(recipient_username)
+    recipient_new_total_points = recipient_customer.get("total_points") + points
+
+    #update both customers at the same time
+    print(update_total_points(sender_customer, sender_new_total_points))
+    print(update_total_points(recipient_customer, recipient_new_total_points))
 
 # print(get_balance("AntoineCastel"))
 
@@ -117,7 +137,9 @@ def remove_points(username, points):
 # print(update_total_points(customers["AntoineCastel"], 15))
 
 try:
-    print(remove_points("AntoineCastel", 10))
+    # print(add_points("AntoineCastel", 100))
+    print(donate_points("AntoineCastel", "barbitcheps", 1)) # print none
+
 except Exception as e:
     # Handle the exception
     print(f"Exception raised: {str(e)}")
