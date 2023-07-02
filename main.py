@@ -49,16 +49,17 @@ def balance(update: Update, context: CallbackContext) -> None:
 
     # Process the username and send a reply
     if username:
-        #try
-        user_balance = lc.get_balance(username)
-        reply_text = f"@{username}, you have {user_balance} points in your T5 bank account!"
+        try:
+            user_balance = lc.get_balance(username)
+            reply_text = f"@{username}, you have {user_balance} points in your T5 bank account!"
+        except Exception as e:
+            reply_text = f"BeeDeeBeeBoop 🤖 Error : {e}"
     else:
         reply_text = "First, create a username in Telegram!"
 
     context.bot.send_message(
         chat_id=update.message.chat_id,
         text=reply_text,
-        # parse_mode="MarkdownV2",
     )
 
 

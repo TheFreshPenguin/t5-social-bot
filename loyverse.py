@@ -20,7 +20,7 @@ class LoyverseConnector:
         if customer:
             return customer
         else:
-            raise Exception(f"{username} is not binded with any loyverse customer")
+            raise Exception(f"{username} is not binded with any loyverse customer, please ask a T5 admin to be binded")
 
     @staticmethod
     def read_customers(data):
