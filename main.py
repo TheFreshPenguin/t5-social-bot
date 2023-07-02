@@ -34,10 +34,11 @@ prompts = parse("resources/prompts.txt")
 logging.info(prompts)
 
 
-def start(update: Update, context: CallbackContext) -> None:
+def help(update: Update, context: CallbackContext) -> None:
     context.bot.send_message(
         chat_id=update.message.chat_id,
-        text=prompts.get("welcome")
+        text=prompts.get("welcome"),
+        parse_mode="MarkdownV2",
     )
 
 
@@ -49,7 +50,7 @@ def main() -> None:
     dispatcher = updater.dispatcher
 
     # Register commands
-    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CommandHandler("help", help))
 
     # Start the Bot
     logging.info('start_polling')

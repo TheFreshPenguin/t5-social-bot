@@ -1,11 +1,21 @@
-#-- welcome
+#-- welcome --#
 
-Welcome to T5 Social !
-BeeDeeBeeBoop 🤖 Hi I'm T5 Social's Telegram bot. With me, you can create a team for Trivia Night, book a spot
-for the Poker Tournament on Sunday, check you community points and many more!!
-Note that I am still a Demo. Many updates to come ❤️
+Welcome to T5 Social \!
+BeeDeeBeeBoop 🤖 Hi, I'm T5 Social's Telegram bot\.
 
-#-- events_of_the_week
+Try the following commands:
+*check your points balance:*
+/balance
+
+*donate points to another community member
+\(you must have enough points\)*
+/donate \{Telegram username\} \{number of points\}
+e\.g\. `/donate @barbitcheps 33`
+
+Note that I am still a demo\. Many updates to come\.
+Made with ❤️ by [Antoine](tg://user?id=1698340339)
+
+#-- events_of_the_week --#
 
 _Event Schedule 15\-21_
 
@@ -33,43 +43,43 @@ Poker Night \| Alan
 
 Our events from tomorrow will take place outdoors
 
-#-- main_menu
+#-- main_menu --#
 
 What do you want to do?
 
-#-- signed_up_status
+#-- signed_up_status --#
 
 Cool\! You signed up\. Now it's just a matter of you showing up on time\. Enjoy\!
 The following community members are coming:
 
-#-- sign_up_poker_button
+#-- sign_up_poker_button --#
 
 Sign up for this Sunday's Poker Night ♦♠
 
-#-- create_trivia_team
+#-- create_trivia_team --#
 
 Create a Trivia Team for this Friday's Trivia 🤓✒
 
-#-- check_points
+#-- check_points --#
 
 Check your Community Points balance 📄
 
-#-- trivia_hall_of_fame
+#-- trivia_hall_of_fame --#
 
 Trivia Hall-Of-Fame 🥇
 
-#-- manage_trivia_teams
+#-- manage_trivia_teams --#
 
 Manage your Trivia teams
 
-#-- see_your_teams
+#-- see_your_teams --#
 
 See all the teams you are in
 
-#-- go_back_main_menu
+#-- go_back_main_menu --#
 
 Go back to the main menu
 
-#-- check_trivia_score
+#-- check_trivia_score --#
 
 check all your teams scores !
