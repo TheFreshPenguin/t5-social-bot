@@ -8,6 +8,8 @@ BASE_URL = "https://api.loyverse.com/v1.0"
 READ_ALL_CUSTOMERS_ENDPOINT = f"{BASE_URL}/customers?updated_at_min=2023-07-01T12:30:00.000Z&limit=250"
 CREATE_OR_UPDATE_CUSTOMERS_ENDPOINT = f"{BASE_URL}/customers"
 
+def is_number(variable):
+    return isinstance(variable, (int, float))
 
 def call_api_get(url, token):
     headers = {
@@ -68,7 +70,7 @@ def get_balance(username):
     if customer:
         return customer.get("total_points")
     else:
-        return None
+        raise Exception("This username is not binded with any loyverse customer")
 
 
 def update_total_points(customer, total_points):
@@ -77,6 +79,9 @@ def update_total_points(customer, total_points):
 
 
 def add_points(username, points):
+
+    if not is_number(points):
+        raise Exception("added points must be a number")
     if points <= 0:
         raise Exception("added points must be non-zero positive")
 
