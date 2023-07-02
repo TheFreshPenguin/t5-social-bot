@@ -65,14 +65,18 @@ def get_customers(url, token):
     return read_customers(data)
 
 
-def get_balance(username):
-    customers = get_customers(READ_ALL_CUSTOMERS_ENDPOINT, LOYVERSE_TOKEN)
-
+def get_customer_from_username(customers, username):
     customer = customers.get(username)
     if customer:
-        return customer.get("total_points")
+        return customer
     else:
-        raise Exception("This username is not binded with any loyverse customer")
+        raise Exception(f"{username} is not binded with any loyverse customer")
+
+
+def get_balance(username):
+    customers = get_customers(READ_ALL_CUSTOMERS_ENDPOINT, LOYVERSE_TOKEN)
+    customer = get_customer_from_username(customers, username)
+    return customer.get("total_points")
 
 
 def update_total_points(customer, total_points):
@@ -109,6 +113,7 @@ def remove_points(username, points):
 
     return update_total_points(customer, new_total_points)
 
+
 def donate_points(sender_username, recipient_username, points):
     if not is_number(points):
         raise Exception("donated points must be a number")
@@ -117,18 +122,21 @@ def donate_points(sender_username, recipient_username, points):
 
     customers = get_customers(READ_ALL_CUSTOMERS_ENDPOINT, LOYVERSE_TOKEN)
 
-    sender_customer = customers.get(sender_username)
-    sender_new_total_points = sender_customer.get("total_points") - points
+    if sender_username != "roblevermusic":  # Rob can send as much points as he wants because he is god 🙏
+        sender_customer = get_customer_from_username(customers, sender_username)
+        sender_new_total_points = sender_customer.get("total_points") - points
 
-    if sender_new_total_points < 0:
-        raise Exception("you cannot donate more points than you already have")
+        if sender_new_total_points < 0:
+            raise Exception("you cannot donate more points than you already have")
 
-    recipient_customer = customers.get(recipient_username)
+        print(update_total_points(sender_customer, sender_new_total_points))
+
+    recipient_customer = get_customer_from_username(customers, recipient_username)
     recipient_new_total_points = recipient_customer.get("total_points") + points
 
-    #update both customers at the same time
-    print(update_total_points(sender_customer, sender_new_total_points))
     print(update_total_points(recipient_customer, recipient_new_total_points))
+    return True
+
 
 # print(get_balance("AntoineCastel"))
 
@@ -138,7 +146,7 @@ def donate_points(sender_username, recipient_username, points):
 
 try:
     # print(add_points("AntoineCastel", 100))
-    print(donate_points("AntoineCastel", "barbitcheps", 1)) # print none
+    print(donate_points("roblevermusic", "barbitcheps", 1))  # print True
 
 except Exception as e:
     # Handle the exception
