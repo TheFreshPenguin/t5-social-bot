@@ -72,11 +72,26 @@ def update_total_points(customer, total_points):
     return call_api_post(CREATE_OR_UPDATE_CUSTOMERS_ENDPOINT, LOYVERSE_TOKEN, customer)
 
 
-# def add_points(username):
+def add_points(username, points):
+    if points <= 0:
+        raise Exception("added points must be non-zero positive")
+
+    data = call_api_get(READ_ALL_CUSTOMERS_ENDPOINT, LOYVERSE_TOKEN)
+    customers = read_customers(data)
+
+    customer = customers.get(username)
+    new_total_points = customer.get("total_points") + points
+    return update_total_points(customer, new_total_points)
 
 
 # print(get_balance("AntoineCastel"))
 
-data = call_api_get(READ_ALL_CUSTOMERS_ENDPOINT, LOYVERSE_TOKEN)
-customers = read_customers(data)
-print(update_total_points(customers["AntoineCastel"], 15))
+# data = call_api_get(READ_ALL_CUSTOMERS_ENDPOINT, LOYVERSE_TOKEN)
+# customers = read_customers(data)
+# print(update_total_points(customers["AntoineCastel"], 15))
+
+try:
+    print(add_points("AntoineCastel", 15))
+except Exception as e:
+    # Handle the exception
+    print(f"Exception raised: {str(e)}")
