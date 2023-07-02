@@ -56,9 +56,13 @@ def read_customers(data):
     return customers
 
 
-def get_balance(username):
+def get_customers(url, token):
     data = call_api_get(READ_ALL_CUSTOMERS_ENDPOINT, LOYVERSE_TOKEN)
-    customers = read_customers(data)
+    return read_customers(data)
+
+
+def get_balance(username):
+    customers = get_customers(READ_ALL_CUSTOMERS_ENDPOINT, LOYVERSE_TOKEN)
 
     customer = customers.get(username)
     if customer:
@@ -76,8 +80,7 @@ def add_points(username, points):
     if points <= 0:
         raise Exception("added points must be non-zero positive")
 
-    data = call_api_get(READ_ALL_CUSTOMERS_ENDPOINT, LOYVERSE_TOKEN)
-    customers = read_customers(data)
+    customers = get_customers(READ_ALL_CUSTOMERS_ENDPOINT, LOYVERSE_TOKEN)
 
     customer = customers.get(username)
     new_total_points = customer.get("total_points") + points
