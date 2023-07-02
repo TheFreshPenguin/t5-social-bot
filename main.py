@@ -7,6 +7,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Callb
 
 import psycopg2
 
+from loyverse import LoyverseConnector
 from prompt_parser import parse
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -26,8 +27,9 @@ else:
 
     with open('lv_secret.txt', 'r') as file:
         LOYVERSE_TOKEN = file.read()
-# db_connection
 
+# Loyverse connector
+lc = LoyverseConnector(LOYVERSE_TOKEN)
 
 # prompts
 prompts = parse("resources/prompts.txt")
@@ -42,6 +44,24 @@ def help(update: Update, context: CallbackContext) -> None:
     )
 
 
+def balance(update: Update, context: CallbackContext) -> None:
+    username = update.message.from_user.username
+
+    # Process the username and send a reply
+    if username:
+        #try
+        user_balance = lc.get_balance(username)
+        reply_text = f"@{username}, you have {user_balance} points in your T5 bank account!"
+    else:
+        reply_text = "First, create a username in Telegram!"
+
+    context.bot.send_message(
+        chat_id=update.message.chat_id,
+        text=reply_text,
+        # parse_mode="MarkdownV2",
+    )
+
+
 def main() -> None:
     updater = Updater(TELEGRAM_TOKEN)
 
@@ -51,6 +71,7 @@ def main() -> None:
 
     # Register commands
     dispatcher.add_handler(CommandHandler("help", help))
+    dispatcher.add_handler(CommandHandler("balance", balance))
 
     # Start the Bot
     logging.info('start_polling')

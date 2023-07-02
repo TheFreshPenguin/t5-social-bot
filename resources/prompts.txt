@@ -12,7 +12,7 @@ Try the following commands:
 /donate \{Telegram username\} \{number of points\}
 e\.g\. `/donate @barbitcheps 33`
 
-Note that I am still a demo\. Many updates to come\.
+Version 0\.2\.1 Many updates to come\.
 Made with ❤️ by [Antoine](tg://user?id=1698340339)
 
 #-- events_of_the_week --#

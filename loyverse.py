@@ -72,7 +72,7 @@ class LoyverseConnector:
         return self.read_customers(data)
 
     def get_balance(self, username):
-        customers = self.get_customers(self.READ_ALL_CUSTOMERS_ENDPOINT)
+        customers = self.get_all_customers()
         customer = self.get_customer_from_username(customers, username)
         return customer.get("total_points")
 
