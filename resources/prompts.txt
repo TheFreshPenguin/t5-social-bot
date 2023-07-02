@@ -4,7 +4,7 @@ Welcome to T5 Social \!
 BeeDeeBeeBoop 🤖 Hi, I'm T5 Social's Telegram bot\.
 
 __how does it work__
-1\.First, ask a T5 admin (someone at the bar or @AntoineCastel) to bind your telegram username to your tab
+1\.First, ask a T5 admin \(someone at the bar or @AntoineCastel\) to bind your telegram username to your tab
 2\.Then, try one of the following commands:
 *check your points balance:*
 /balance
