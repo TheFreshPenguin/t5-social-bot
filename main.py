@@ -36,6 +36,21 @@ prompts = parse("resources/prompts.txt")
 logging.info(prompts)
 
 
+def is_convertible_to_number(s):
+    try:
+        float(s)  # or int(s) if you only want to check for integers
+        return True
+    except ValueError:
+        return False
+
+
+def remove_at_symbol(text):
+    if text.startswith('@'):
+        return text[1:]
+    else:
+        return text
+
+
 def help(update: Update, context: CallbackContext) -> None:
     context.bot.send_message(
         chat_id=update.message.chat_id,
@@ -63,6 +78,37 @@ def balance(update: Update, context: CallbackContext) -> None:
     )
 
 
+def donate(update: Update, context: CallbackContext) -> None:
+    # Get the arguments passed with the command
+    args = context.args
+
+    # Process the arguments and send a reply
+    if len(args) < 2:
+        reply_text = f"respect the following format: /donate telegram_username number_of_points"
+    elif not is_convertible_to_number(args[1]):
+        reply_text = f"number_of_points must be ... a number 😬"
+    else:
+        username = update.message.from_user.username
+
+        # Process the username and send a reply
+        if username:
+            try:
+                if lc.donate_points(username, remove_at_symbol(args[0]), float(args[1])):
+                    # add a bunch of pregenerated comments
+                    reply_text = f"@{username} donated {args[1]} points to {args[0]}"
+                else:
+                    reply_text = f"BeeDeeBeeBoop 🤖 Error : failed to donate points"
+            except Exception as e:
+                reply_text = f"BeeDeeBeeBoop 🤖 Error : {e}"
+        else:
+            reply_text = "First, create a username in Telegram!"
+
+    context.bot.send_message(
+        chat_id=update.message.chat_id,
+        text=reply_text,
+    )
+
+
 def main() -> None:
     updater = Updater(TELEGRAM_TOKEN)
 
@@ -73,6 +119,7 @@ def main() -> None:
     # Register commands
     dispatcher.add_handler(CommandHandler("help", help))
     dispatcher.add_handler(CommandHandler("balance", balance))
+    dispatcher.add_handler(CommandHandler("donate", donate))
 
     # Start the Bot
     logging.info('start_polling')

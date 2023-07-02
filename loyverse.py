@@ -20,7 +20,7 @@ class LoyverseConnector:
         if customer:
             return customer
         else:
-            raise Exception(f"{username} is not binded with any loyverse customer, please ask a T5 admin to be binded")
+            raise Exception(f"@{username} is not binded with any loyverse customer, please ask a T5 admin to be binded")
 
     @staticmethod
     def read_customers(data):
@@ -122,7 +122,7 @@ class LoyverseConnector:
             sender_new_total_points = sender_customer.get("total_points") - points
 
             if sender_new_total_points < 0:
-                raise Exception("you cannot donate more points than you already have")
+                raise Exception("you cannot donate more points than you have in your balance")
 
             print(self.update_total_points(sender_customer, sender_new_total_points))
 

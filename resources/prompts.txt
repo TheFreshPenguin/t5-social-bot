@@ -3,14 +3,16 @@
 Welcome to T5 Social \!
 BeeDeeBeeBoop 🤖 Hi, I'm T5 Social's Telegram bot\.
 
-Try the following commands:
+__how does it work__
+1\.First, ask a T5 admin (someone at the bar or @AntoineCastel) to bind your telegram username to your tab
+2\.Then, try one of the following commands:
 *check your points balance:*
 /balance
 
 *donate points to another community member
 \(you must have enough points\)*
 /donate \{Telegram username\} \{number of points\}
-e\.g\. `/donate @barbitcheps 33`
+e\.g\. `/donate @barbitcheps 33\.3`
 
 Version 0\.2\.1 Many updates to come\.
 Made with ❤️ by [Antoine](tg://user?id=1698340339)
