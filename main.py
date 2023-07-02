@@ -1,3 +1,5 @@
+import random
+
 import logging
 import os
 
@@ -35,6 +37,13 @@ lc = LoyverseConnector(LOYVERSE_TOKEN)
 prompts = parse("resources/prompts.txt")
 logging.info(prompts)
 
+#sarcasm
+with open("resources/donate_sarcasm.txt", "r") as file:
+    donate_sarcastic_comments = file.readlines()
+
+with open("resources/balance_sarcasm.txt", "r") as file:
+    balance_sarcastic_comments = file.readlines()
+
 
 def is_convertible_to_number(s):
     try:
@@ -66,7 +75,8 @@ def balance(update: Update, context: CallbackContext) -> None:
     if username:
         try:
             user_balance = lc.get_balance(username)
-            reply_text = f"@{username}, you have {user_balance} points in your T5 bank account!"
+            sarc = random.choice(balance_sarcastic_comments)
+            reply_text = f"BeeDeeBeeBoop 🤖 {sarc}@{username}, you have {user_balance} points in your T5 bank account!"
         except Exception as e:
             reply_text = f"BeeDeeBeeBoop 🤖 Error : {e}"
     else:
@@ -94,8 +104,8 @@ def donate(update: Update, context: CallbackContext) -> None:
         if username:
             try:
                 if lc.donate_points(username, remove_at_symbol(args[0]), float(args[1])):
-                    # add a bunch of pregenerated comments
-                    reply_text = f"@{username} donated {args[1]} points to {args[0]}"
+                    sarc = random.choice(donate_sarcastic_comments)
+                    reply_text = f"BeeDeeBeeBoop 🤖 {sarc}@{username} donated {args[1]} points to {args[0]}"
                 else:
                     reply_text = f"BeeDeeBeeBoop 🤖 Error : failed to donate points"
             except Exception as e:
