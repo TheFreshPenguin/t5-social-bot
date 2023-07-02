@@ -22,6 +22,24 @@ class LoyverseConnector:
         else:
             raise Exception(f"{username} is not binded with any loyverse customer")
 
+    @staticmethod
+    def read_customers(data):
+        customers = {}
+
+        for c in data.get("customers"):
+            note = c.get("note")
+            if note:
+                infos = {
+                    "note": note,
+                    "id": c.get("id"),
+                    "name": c.get("name"),
+                    "total_points": c.get("total_points")
+                }
+
+                customers[note] = infos
+
+        return customers
+
     def call_api_get(self, url):
         headers = {
             "Authorization": f"Bearer {self.token}"
@@ -48,23 +66,6 @@ class LoyverseConnector:
         else:
             print(f"Error {response.status_code} occurred.")
             return None
-
-    def read_customers(self, data):
-        customers = {}
-
-        for c in data.get("customers"):
-            note = c.get("note")
-            if note:
-                infos = {
-                    "note": note,
-                    "id": c.get("id"),
-                    "name": c.get("name"),
-                    "total_points": c.get("total_points")
-                }
-
-                customers[note] = infos
-
-        return customers
 
     def get_all_customers(self):
         data = self.call_api_get(self.READ_ALL_CUSTOMERS_ENDPOINT)
