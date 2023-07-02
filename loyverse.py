@@ -131,15 +131,3 @@ class LoyverseConnector:
         print(self.update_total_points(recipient_customer, recipient_new_total_points))
         return True
 
-
-with open('lv_secret.txt', 'r') as file:
-    LOYVERSE_TOKEN = file.read()
-
-lc = LoyverseConnector(LOYVERSE_TOKEN)
-try:
-    # print(add_points("AntoineCastel", 100))
-    print(lc.donate_points("AntoineCastel", "barbitcheps", 1))  # print True
-
-except Exception as e:
-    # Handle the exception
-    print(f"Exception raised: {str(e)}")
