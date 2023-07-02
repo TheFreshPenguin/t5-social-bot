@@ -45,6 +45,7 @@ def read_customers(data):
         note = c.get("note")
         if note:
             infos = {
+                "note": note,
                 "id": c.get("id"),
                 "name": c.get("name"),
                 "total_points": c.get("total_points")
@@ -66,13 +67,16 @@ def get_balance(username):
         return None
 
 
-# def update_points(username, points):
-#
-#     body =
-#     call_api_post(CREATE_OR_UPDATE_CUSTOMERS_ENDPOINT, LOYVERSE_TOKEN, customer)
+def update_total_points(customer, total_points):
+    customer["total_points"] = total_points
+    return call_api_post(CREATE_OR_UPDATE_CUSTOMERS_ENDPOINT, LOYVERSE_TOKEN, customer)
 
 
 # def add_points(username):
 
 
-print(get_balance("AntoineCastel"))
+# print(get_balance("AntoineCastel"))
+
+data = call_api_get(READ_ALL_CUSTOMERS_ENDPOINT, LOYVERSE_TOKEN)
+customers = read_customers(data)
+print(update_total_points(customers["AntoineCastel"], 15))
