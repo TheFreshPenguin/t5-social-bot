@@ -76,7 +76,7 @@ def balance(update: Update, context: CallbackContext) -> None:
         try:
             user_balance = int(lc.get_balance(username))
             sarc = random.choice(balance_sarcastic_comments).rstrip('\n')
-            reply_text = f"{sarc}@{username}, you have {user_balance} T5 Loyalty Points!"
+            reply_text = f"{sarc} @{username}, you have {user_balance} T5 Loyalty Points!"
         except Exception as e:
             reply_text = f"BeeDeeBeeBoop 🤖 Error : {e}"
     else:
