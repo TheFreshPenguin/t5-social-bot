@@ -12,7 +12,7 @@ How does this work?
 
 *Donate to another member*
 
-/donate \{username\} \{number of points\}
+/donate \{username\} \{points\}
 e\.g\. `/donate @barbitcheps 33\.3`
 
 Version 0\.2\.1 Updates to come\.
