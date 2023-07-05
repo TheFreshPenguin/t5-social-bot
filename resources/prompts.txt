@@ -15,7 +15,6 @@ How does this work?
 /donate \{username\} \{points\}
 e\.g\. `/donate @barbitcheps 33\.3`
 
-Version 0\.2\.1 Updates to come\.
 Made with ❤️ by [Antoine](tg://user?id=1698340339)
 
 #-- events_of_the_week --#
