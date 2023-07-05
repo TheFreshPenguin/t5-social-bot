@@ -107,7 +107,7 @@ def donate(update: Update, context: CallbackContext) -> None:
                     sarc = random.choice(donate_sarcastic_comments).rstrip('\n')
                     reply_text = f"{sarc} @{username} donated {args[1]} points to {args[0]}"
                 else:
-                    reply_text = f"BeeDeeBeeBoop 🤖 Error : failed to donate points"
+                    reply_text = f"Error : failed to donate points"
             except Exception as e:
                 reply_text = f"BeeDeeBeeBoop 🤖 Error : {e}"
         else:
