@@ -20,7 +20,7 @@ class LoyverseConnector:
         if customer:
             return customer
         else:
-            raise Exception(f"{username} is not binded with any loyverse customer")
+            raise Exception(f"@{username} is not a recognised user, try again!")
 
     @staticmethod
     def read_customers(data):
@@ -72,7 +72,7 @@ class LoyverseConnector:
         return self.read_customers(data)
 
     def get_balance(self, username):
-        customers = self.get_customers(self.READ_ALL_CUSTOMERS_ENDPOINT)
+        customers = self.get_all_customers()
         customer = self.get_customer_from_username(customers, username)
         return customer.get("total_points")
 
@@ -122,7 +122,7 @@ class LoyverseConnector:
             sender_new_total_points = sender_customer.get("total_points") - points
 
             if sender_new_total_points < 0:
-                raise Exception("you cannot donate more points than you already have")
+                raise Exception("you cannot donate more points than you have in your balance")
 
             print(self.update_total_points(sender_customer, sender_new_total_points))
 
@@ -131,15 +131,3 @@ class LoyverseConnector:
         print(self.update_total_points(recipient_customer, recipient_new_total_points))
         return True
 
-
-with open('lv_secret.txt', 'r') as file:
-    LOYVERSE_TOKEN = file.read()
-
-lc = LoyverseConnector(LOYVERSE_TOKEN)
-try:
-    # print(add_points("AntoineCastel", 100))
-    print(lc.donate_points("AntoineCastel", "barbitcheps", 1))  # print True
-
-except Exception as e:
-    # Handle the exception
-    print(f"Exception raised: {str(e)}")
