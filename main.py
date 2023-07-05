@@ -74,7 +74,7 @@ def balance(update: Update, context: CallbackContext) -> None:
     # Process the username and send a reply
     if username:
         try:
-            user_balance = lc.get_balance(username)
+            user_balance = int(lc.get_balance(username))
             sarc = random.choice(balance_sarcastic_comments)
             reply_text = f"{sarc}@{username}, you have {user_balance} T5 Loyalty Points!"
         except Exception as e:
