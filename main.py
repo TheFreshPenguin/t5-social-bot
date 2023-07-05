@@ -111,6 +111,12 @@ def donate(update: Update, context: CallbackContext) -> None:
                     if lc.donate_points(username, recipient_username, float(args[1])):
                         sarc = random.choice(donate_sarcastic_comments).rstrip('\n')
                         reply_text = f"{sarc} @{username} donated {args[1]} points to {args[0]}"
+
+                         # Send notification to recipient
+                        bot = Bot(token="YOUR_BOT_TOKEN")
+                        recipient_chat_id = get_recipient_chat_id(recipient_username)  # Replace with your logic to get recipient's chat ID
+                        notification_text = f"It's your lucky day! You received a donation of {args[1]} points from @{username}!"
+                        bot.send_message(chat_id=recipient_chat_id, text=notification_text)
                     else:
                         reply_text = "Error: failed to donate points"
                 except Exception as e:
