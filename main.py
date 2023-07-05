@@ -100,18 +100,23 @@ def donate(update: Update, context: CallbackContext) -> None:
     else:
         username = update.message.from_user.username
 
-        # Process the username and send a reply
-        if username:
-            try:
-                if lc.donate_points(username, remove_at_symbol(args[0]), float(args[1])):
-                    sarc = random.choice(donate_sarcastic_comments).rstrip('\n')
-                    reply_text = f"{sarc} @{username} donated {args[1]} points to {args[0]}"
-                else:
-                    reply_text = f"Error : failed to donate points"
-            except Exception as e:
-                reply_text = f"BeeDeeBeeBoop 🤖 Error : {e}"
+        # Check if the donor and recipient usernames are the same
+        recipient_username = remove_at_symbol(args[0])
+        if recipient_username == username:
+            reply_text = "Sorry, self-donations are not allowed."
         else:
-            reply_text = "First, create a username in Telegram!"
+            # Process the username and send a reply
+            if username:
+                try:
+                    if lc.donate_points(username, recipient_username, float(args[1])):
+                        sarc = random.choice(donate_sarcastic_comments).rstrip('\n')
+                        reply_text = f"{sarc} @{username} donated {args[1]} points to {args[0]}"
+                    else:
+                        reply_text = "Error: failed to donate points"
+                except Exception as e:
+                    reply_text = f"BeeDeeBeeBoop 🤖 Error: {e}"
+            else:
+                reply_text = "First, create a username in Telegram!"
 
     context.bot.send_message(
         chat_id=update.message.chat_id,
