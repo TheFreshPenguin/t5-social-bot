@@ -104,8 +104,8 @@ def donate(update: Update, context: CallbackContext) -> None:
         if username:
             try:
                 if lc.donate_points(username, remove_at_symbol(args[0]), float(args[1])):
-                    sarc = random.choice(donate_sarcastic_comments)
-                    reply_text = f"BeeDeeBeeBoop 🤖 {sarc}@{username}, you donated {args[1]} points to {args[0]}"
+                    sarc = random.choice(donate_sarcastic_comments).rstrip('\n')
+                    reply_text = f"{sarc} @{username}, you donated {args[1]} points to {args[0]}"
                 else:
                     reply_text = f"BeeDeeBeeBoop 🤖 Error : failed to donate points"
             except Exception as e:
