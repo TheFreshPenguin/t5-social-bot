@@ -134,11 +134,11 @@ def raffle(update: Update, context: CallbackContext) -> None:
             lc.remove_points(username, 5)
             raffle_register.append(username)
             entry_count = Counter(raffle_register)
-            reply_text = f"@{username} Congrats! You are on the list of our special T5 raffle!\n\n"
+            reply_text = f"Congrats @{username}. You just bought a ticket for the Community Raffle. Thanks for supporting and good luck!\n\n"
 
             # Display the list of entries with entry counts
             for entry, count in entry_count.items():
-                reply_text += f"@{entry} - {count} entries\n"
+                reply_text += f"@{entry} - {count} Ticket(s)\n"
         except Exception as e:
             reply_text = f"BeeDeeBeeBoop 🤖 Error: {e}"
     else:
@@ -148,8 +148,12 @@ def raffle(update: Update, context: CallbackContext) -> None:
         chat_id=update.message.chat_id,
         text=reply_text,
     )
-
-  
+    # A command for god to edit the list for the raffle
+def raffle_list(update: Update, context: CallbackContext) -> None:
+  username = update.message.from_user.username
+  if username == "roblevermusic":
+    raffle_register = context.args
+    
 def main() -> None:
     updater = Updater(TELEGRAM_TOKEN)
 
@@ -162,6 +166,7 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("balance", balance))
     dispatcher.add_handler(CommandHandler("donate", donate))
     dispatcher.add_handler(CommandHandler("raffle", raffle))
+    dispatcher.add_handler(CommandHandler("raffle_list", raffle_list)) 
 
     # Start the Bot
     logging.info('start_polling')
@@ -173,4 +178,5 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
-  
+
+
