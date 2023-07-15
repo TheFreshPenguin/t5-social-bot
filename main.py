@@ -158,7 +158,7 @@ def raffle_list(update: Update, context: CallbackContext) -> None:
   if username == "roblevermusic":
     raffle_register = context.args
 
-  print raffle_register
+  print(raffle_register)
     
 def main() -> None:
     updater = Updater(TELEGRAM_TOKEN)
