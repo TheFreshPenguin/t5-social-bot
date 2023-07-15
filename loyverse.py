@@ -104,7 +104,7 @@ class LoyverseConnector:
         new_total_points = customer.get("total_points") - points
 
         if new_total_points < 0:
-            raise Exception("negative balance")
+            raise Exception(f"Oh no @{username}! You don't have enough points for the Community Raffle. Buy some drinks from the bar or beg a friend for a donation!")
 
         return self.update_total_points(customer, new_total_points)
 
