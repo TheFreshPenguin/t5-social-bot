@@ -126,6 +126,8 @@ def donate(update: Update, context: CallbackContext) -> None:
         text=reply_text,
     )
 def raffle(update: Update, context: CallbackContext) -> None:
+    global raffle_register
+    
     username = update.message.from_user.username
 
     # Process the username and send a reply
@@ -150,9 +152,13 @@ def raffle(update: Update, context: CallbackContext) -> None:
     )
     # A command for god to edit the list for the raffle
 def raffle_list(update: Update, context: CallbackContext) -> None:
+  global raffle_register
+    
   username = update.message.from_user.username
   if username == "roblevermusic":
     raffle_register = context.args
+
+  print raffle_register
     
 def main() -> None:
     updater = Updater(TELEGRAM_TOKEN)
