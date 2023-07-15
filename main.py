@@ -9,6 +9,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Callb
 
 import psycopg2
 
+from collections import Counter
 from loyverse import LoyverseConnector
 from prompt_parser import parse
 
@@ -43,6 +44,8 @@ with open("resources/donate_sarcasm.txt", "r") as file:
 
 with open("resources/balance_sarcasm.txt", "r") as file:
     balance_sarcastic_comments = file.readlines()
+# raffle 
+raffle_register = []
 
 
 def is_convertible_to_number(s):
@@ -122,8 +125,31 @@ def donate(update: Update, context: CallbackContext) -> None:
         chat_id=update.message.chat_id,
         text=reply_text,
     )
+def raffle(update: Update, context: CallbackContext) -> None:
+    username = update.message.from_user.username
 
+    # Process the username and send a reply
+    if username:
+        try:
+            lc.remove_points(username, 5)
+            raffle_register.append(username)
+            entry_count = Counter(raffle_register)
+            reply_text = f"@{username} Congrats! You are on the list of our special T5 raffle!\n\n"
 
+            # Display the list of entries with entry counts
+            for entry, count in entry_count.items():
+                reply_text += f"@{entry} - {count} entries\n"
+        except Exception as e:
+            reply_text = f"BeeDeeBeeBoop 🤖 Error: {e}"
+    else:
+        reply_text = "First, create a username in Telegram!"
+
+    context.bot.send_message(
+        chat_id=update.message.chat_id,
+        text=reply_text,
+    )
+
+  
 def main() -> None:
     updater = Updater(TELEGRAM_TOKEN)
 
@@ -135,6 +161,7 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("help", help))
     dispatcher.add_handler(CommandHandler("balance", balance))
     dispatcher.add_handler(CommandHandler("donate", donate))
+    dispatcher.add_handler(CommandHandler("raffle", raffle))
 
     # Start the Bot
     logging.info('start_polling')
@@ -146,3 +173,4 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
+  
