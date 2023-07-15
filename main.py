@@ -117,7 +117,7 @@ def donate(update: Update, context: CallbackContext) -> None:
                     else:
                         reply_text = "Error: failed to donate points"
                 except Exception as e:
-                    reply_text = f"BeeDeeBeeBoop 🤖 Error: {e}"
+                    reply_text = e
             else:
                 reply_text = "First, create a username in Telegram!"
 
@@ -142,7 +142,7 @@ def raffle(update: Update, context: CallbackContext) -> None:
             for entry, count in entry_count.items():
                 reply_text += f"@{entry} - {count} Ticket(s)\n"
         except Exception as e:
-            reply_text = f"BeeDeeBeeBoop 🤖 Error: {e}"
+            reply_text = e
     else:
         reply_text = "First, create a username in Telegram!"
 
