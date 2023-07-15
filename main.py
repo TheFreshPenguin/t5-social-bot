@@ -19,14 +19,10 @@ logger = logging.getLogger(__name__)
 # telegram token
 if os.environ.get('is_prod') == 'True':
     TELEGRAM_TOKEN = os.environ['telegram_token']
-    DATABASE_URL = os.environ['DATABASE_URL']
     LOYVERSE_TOKEN = os.environ['loyverse_token']
 else:
     with open('secret.txt', 'r') as file:
         TELEGRAM_TOKEN = file.read()
-
-    with open('db_secret.txt', 'r') as file:
-        DATABASE_URL = file.read()
 
     with open('lv_secret.txt', 'r') as file:
         LOYVERSE_TOKEN = file.read()
