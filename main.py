@@ -14,6 +14,8 @@ from collections import Counter
 from loyverse import LoyverseConnector
 from prompt_parser import parse
 
+from datetime import datetime
+
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -177,9 +179,19 @@ def raffle_list(update: Update, context: CallbackContext) -> None:
   print(raffle_register)
 
 def birthday(update: Update, context: CallbackContext) -> None:
+    birthday_of_today = []
+    
+    current_date = datetime.now()
+
+    current_month = current_date.month
+    current_day = current_date.day
+    for key, value in birthdays.items():
+        if value = f"{current_month}/{current_day}":
+            birthday_of_today.append(key)
+    
     context.bot.send_message(
         chat_id=-961065253,
-        text=str(birthdays),
+        text=str(birthday_of_today),
     )
 
     
