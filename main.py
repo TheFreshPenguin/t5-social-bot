@@ -194,6 +194,12 @@ def birthday(update: Update, context: CallbackContext) -> None:
         text=str(birthday_of_today),
     )
 
+def start_scheduler(update, context):
+    context.job_queue.run_daily(birthday, time=datetime.time(hour=13, minute=50), context = context)
+
+# Add a command handler to stop the daily task (optional)
+# def stop(update, context):
+#     context.job_queue.stop()
     
 def main() -> None:
     updater = Updater(TELEGRAM_TOKEN, use_context=True)
@@ -201,7 +207,7 @@ def main() -> None:
     # Get the dispatcher to register handlers
     # Then, we register each handler and the conditions the update must meet to trigger it
     dispatcher = updater.dispatcher
-    
+    j = updater.job_queue
 
     # Register commands
     dispatcher.add_handler(CommandHandler("help", help))
@@ -210,38 +216,11 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("raffle", raffle))
     dispatcher.add_handler(CommandHandler("raffle_list", raffle_list)) 
     #dispatcher.add_handler(CommandHandler("birthday", birthday)) 
-   
-def daily_task(context):
-    # Get the current date
-    now = datetime.datetime.now()
+    updater.dispatcher.add_handler(CommandHandler("start_scheduler", start_scheduler))
     
-    # Replace the hour and minute below with the desired time to execute the task
-    target_time = datetime.time(hour=13, minute=31)
-    
-    # Check if the current time matches the target time
-    if now.time() == target_time:
-        # Replace this with the task you want to perform daily
-        context.bot.send_message(chat_id=context.job.context, text="Daily task executed!")
+    #optional
+    #updater.dispatcher.add_handler(CommandHandler('stop', stop))
 
-        from telegram.ext import CommandHandler, Job
-
-# Add the command handler to trigger the daily task manually
-def start(update, context):
-    context.job_queue.run_daily(daily_task, time=datetime.time(hour=0, minute=1), context=update.message.chat_id)
-
-# Add a command handler to stop the daily task (optional)
-def stop(update, context):
-    context.job_queue.stop()
-
-updater.dispatcher.add_handler(CommandHandler('start', start))
-updater.dispatcher.add_handler(CommandHandler('stop', stop))
-
-# Start the bot
-updater.start_polling()
-updater.idle()
-
-
-    
     # Start the Bot
     logging.info('start_polling')
     updater.start_polling()
@@ -252,5 +231,4 @@ updater.idle()
 
 if __name__ == '__main__':
     main()
-
 
