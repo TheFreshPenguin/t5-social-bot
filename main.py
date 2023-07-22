@@ -201,6 +201,7 @@ def main() -> None:
     # Get the dispatcher to register handlers
     # Then, we register each handler and the conditions the update must meet to trigger it
     dispatcher = updater.dispatcher
+    j = updater.job_queue
 
     # Register commands
     dispatcher.add_handler(CommandHandler("help", help))
@@ -208,7 +209,8 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("donate", donate))
     dispatcher.add_handler(CommandHandler("raffle", raffle))
     dispatcher.add_handler(CommandHandler("raffle_list", raffle_list)) 
-    dispatcher.add_handler(CommandHandler("birthday", birthday)) 
+    #dispatcher.add_handler(CommandHandler("birthday", birthday)) 
+    j.run_daily(birthday, datetime.time(13, 8)
 
     # Start the Bot
     logging.info('start_polling')
