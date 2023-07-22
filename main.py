@@ -195,7 +195,7 @@ def birthday(update: Update, context: CallbackContext) -> None:
     )
 
 def start_scheduler(update: Update, context: CallbackContext) -> None:
-    context.job_queue.run_once(birthday, time=time(hour=14, minute=35))
+    context.job_queue.run_once(birthday, 10)
 
 # Add a command handler to stop the daily task (optional)
 # def stop(update, context):
