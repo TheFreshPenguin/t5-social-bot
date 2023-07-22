@@ -186,7 +186,7 @@ def birthday(update: Update, context: CallbackContext) -> None:
     current_month = current_date.month
     current_day = current_date.day
     for key, value in birthdays.items():
-        if value = f"{current_month}/{current_day}":
+        if value == f"{current_month}/{current_day}":
             birthday_of_today.append(key)
     
     context.bot.send_message(
