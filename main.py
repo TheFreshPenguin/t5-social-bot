@@ -216,7 +216,7 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("raffle", raffle))
     dispatcher.add_handler(CommandHandler("raffle_list", raffle_list)) 
     #dispatcher.add_handler(CommandHandler("birthday", birthday)) 
-    updater.dispatcher.add_handler(CommandHandler("start_scheduler", start_scheduler))
+    dispatcher.add_handler(CommandHandler("start_scheduler", start_scheduler))
     
     #optional
     #updater.dispatcher.add_handler(CommandHandler('stop', stop))
