@@ -196,7 +196,7 @@ def birthday(update: Update, context: CallbackContext) -> None:
 
     
 def main() -> None:
-    updater = Updater(TELEGRAM_TOKEN)
+    updater = Updater(TELEGRAM_TOKEN, use_context=True)
 
     # Get the dispatcher to register handlers
     # Then, we register each handler and the conditions the update must meet to trigger it
