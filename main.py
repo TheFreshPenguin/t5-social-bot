@@ -14,7 +14,7 @@ from collections import Counter
 from loyverse import LoyverseConnector
 from prompt_parser import parse
 
-from datetime import datetime
+from datetime import datetime, time
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -210,7 +210,7 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("raffle", raffle))
     dispatcher.add_handler(CommandHandler("raffle_list", raffle_list)) 
     #dispatcher.add_handler(CommandHandler("birthday", birthday)) 
-    j.run_daily(birthday, datetime.time(13, 8))
+    j.run_daily(birthday, time(13, 8))
 
     # Start the Bot
     logging.info('start_polling')
