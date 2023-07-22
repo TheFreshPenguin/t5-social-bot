@@ -210,7 +210,7 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("raffle", raffle))
     dispatcher.add_handler(CommandHandler("raffle_list", raffle_list)) 
     #dispatcher.add_handler(CommandHandler("birthday", birthday)) 
-    j.run_daily(birthday, time(13, 8), context=None, name=None)
+    j.run_daily(birthday, time(13, 8), name=None)
 
     # Start the Bot
     logging.info('start_polling')
