@@ -2,6 +2,7 @@ import random
 
 import logging
 import os
+import csv
 
 from telegram import Update, ForceReply, InlineKeyboardMarkup, InlineKeyboardButton, ParseMode, KeyboardButton, \
     ReplyKeyboardMarkup, ReplyMarkup
@@ -43,6 +44,24 @@ with open("resources/balance_sarcasm.txt", "r") as file:
 # raffle 
 raffle_register = []
 
+# Birthday-list
+
+birthdays = {}
+
+# Open the CSV file
+with open('resources/T5 Community Data_Birthdays.csv', 'r') as csvfile:
+    # Create a CSV reader object
+    reader = csv.DictReader(csvfile)
+    
+    # Process each row
+    for row in reader:
+        name = row['Username']
+        month = int(row['Month'])
+        day = int(row['Day'])
+        
+        # Do something with the data (e.g., store it in a data structure, print it, etc.)
+        # print(f"{Username}'s birthday is on {month}/{day}.")
+        birthdays[Username] = f"{month}/{day}"
 
 def is_convertible_to_number(s):
     try:
@@ -146,7 +165,8 @@ def raffle(update: Update, context: CallbackContext) -> None:
         chat_id=update.message.chat_id,
         text=reply_text,
     )
-    # A command for god to edit the list for the raffle
+    
+# A command for god to edit the list for the raffle
 def raffle_list(update: Update, context: CallbackContext) -> None:
   global raffle_register
     
@@ -155,6 +175,13 @@ def raffle_list(update: Update, context: CallbackContext) -> None:
     raffle_register = context.args
 
   print(raffle_register)
+
+def birthday(update: Update, context: CallbackContext) -> None:
+    context.bot.send_message(
+        chat_id=-961065253,
+        text=str(birthdays),
+    )
+
     
 def main() -> None:
     updater = Updater(TELEGRAM_TOKEN)
@@ -169,6 +196,7 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("donate", donate))
     dispatcher.add_handler(CommandHandler("raffle", raffle))
     dispatcher.add_handler(CommandHandler("raffle_list", raffle_list)) 
+    dispatcher.add_handler(CommandHandler("birthday", birthday)) 
 
     # Start the Bot
     logging.info('start_polling')
