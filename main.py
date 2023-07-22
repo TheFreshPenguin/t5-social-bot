@@ -55,13 +55,13 @@ with open('resources/T5 Community Data_Birthdays.csv', 'r') as csvfile:
     
     # Process each row
     for row in reader:
-        name = row['Username']
+        username = row['Username']
         month = int(row['Month'])
         day = int(row['Day'])
         
         # Do something with the data (e.g., store it in a data structure, print it, etc.)
         # print(f"{Username}'s birthday is on {month}/{day}.")
-        birthdays[Username] = f"{month}/{day}"
+        birthdays[username] = f"{month}/{day}"
 
 def is_convertible_to_number(s):
     try:
