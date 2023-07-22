@@ -201,7 +201,7 @@ def main() -> None:
     # Get the dispatcher to register handlers
     # Then, we register each handler and the conditions the update must meet to trigger it
     dispatcher = updater.dispatcher
-    j = updater.job_queue
+    
 
     # Register commands
     dispatcher.add_handler(CommandHandler("help", help))
@@ -210,8 +210,38 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("raffle", raffle))
     dispatcher.add_handler(CommandHandler("raffle_list", raffle_list)) 
     #dispatcher.add_handler(CommandHandler("birthday", birthday)) 
-    j.run_daily(birthday, time(13, 8), name=None)
+   
+def daily_task(context):
+    # Get the current date
+    now = datetime.datetime.now()
+    
+    # Replace the hour and minute below with the desired time to execute the task
+    target_time = datetime.time(hour=13, minute=31)
+    
+    # Check if the current time matches the target time
+    if now.time() == target_time:
+        # Replace this with the task you want to perform daily
+        context.bot.send_message(chat_id=context.job.context, text="Daily task executed!")
 
+        from telegram.ext import CommandHandler, Job
+
+# Add the command handler to trigger the daily task manually
+def start(update, context):
+    context.job_queue.run_daily(daily_task, time=datetime.time(hour=0, minute=1), context=update.message.chat_id)
+
+# Add a command handler to stop the daily task (optional)
+def stop(update, context):
+    context.job_queue.stop()
+
+updater.dispatcher.add_handler(CommandHandler('start', start))
+updater.dispatcher.add_handler(CommandHandler('stop', stop))
+
+# Start the bot
+updater.start_polling()
+updater.idle()
+
+
+    
     # Start the Bot
     logging.info('start_polling')
     updater.start_polling()
