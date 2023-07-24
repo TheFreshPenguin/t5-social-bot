@@ -19,27 +19,17 @@ from itertools import groupby
 from datetime import datetime, time, timedelta
 import pytz
 
+from dotenv import load_dotenv
+load_dotenv()
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# telegram token
-if os.environ.get('is_prod') == 'True':
-    TELEGRAM_TOKEN = os.environ['telegram_token']
-    LOYVERSE_TOKEN = os.environ['loyverse_token']
-    BIRTHDAY_CHATS = set([int(chatid) for chatid in os.getenv('birthday_chats', '').split(',') if chatid])
-    BIRTHDAY_POINTS = os.getenv('birthday_points', 5)
-    TIMEZONE = pytz.timezone(os.getenv('timezone', 'Europe/Bucharest'))
-else:
-    with open('secret.txt', 'r') as file:
-        TELEGRAM_TOKEN = file.read()
-
-    with open('lv_secret.txt', 'r') as file:
-        LOYVERSE_TOKEN = file.read()
-
-    BIRTHDAY_CHATS = set()
-    BIRTHDAY_POINTS = 5
-    TIMEZONE = pytz.timezone('Europe/Bucharest')
+TELEGRAM_TOKEN = os.getenv('telegram_token')
+LOYVERSE_TOKEN = os.getenv('loyverse_token')
+BIRTHDAY_CHATS = set([int(chatid) for chatid in os.getenv('birthday_chats', '').split(',') if chatid])
+BIRTHDAY_POINTS = os.getenv('birthday_points', 5)
+TIMEZONE = pytz.timezone(os.getenv('timezone', 'Europe/Bucharest'))
 
 # Loyverse connector
 lc = LoyverseConnector(LOYVERSE_TOKEN)
