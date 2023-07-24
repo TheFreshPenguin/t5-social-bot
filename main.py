@@ -14,7 +14,11 @@ from collections import Counter
 from loyverse import LoyverseConnector
 from prompt_parser import parse
 
-from datetime import datetime, time
+from itertools import groupby
+
+from datetime import datetime, time, timedelta
+import pytz
+
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -23,12 +27,19 @@ logger = logging.getLogger(__name__)
 if os.environ.get('is_prod') == 'True':
     TELEGRAM_TOKEN = os.environ['telegram_token']
     LOYVERSE_TOKEN = os.environ['loyverse_token']
+    BIRTHDAY_CHATS = set([int(chatid) for chatid in os.getenv('birthday_chats', '').split(',') if chatid])
+    BIRTHDAY_POINTS = os.getenv('birthday_points', 5)
+    TIMEZONE = pytz.timezone(os.getenv('timezone', 'Europe/Bucharest'))
 else:
     with open('secret.txt', 'r') as file:
         TELEGRAM_TOKEN = file.read()
 
     with open('lv_secret.txt', 'r') as file:
         LOYVERSE_TOKEN = file.read()
+
+    BIRTHDAY_CHATS = set()
+    BIRTHDAY_POINTS = 5
+    TIMEZONE = pytz.timezone('Europe/Bucharest')
 
 # Loyverse connector
 lc = LoyverseConnector(LOYVERSE_TOKEN)
@@ -48,22 +59,21 @@ raffle_register = []
 
 # Birthday-list
 
+with open("resources/birthday_messages.txt", "r") as file:
+    birthday_messages = file.readlines()
+
+# The keys are birthdays, the values are lists of users without @
 birthdays = {}
 
 # Open the CSV file
 with open('resources/T5 Community Data_Birthdays.csv', 'r') as csvfile:
     # Create a CSV reader object
     reader = csv.DictReader(csvfile)
-    
-    # Process each row
-    for row in reader:
-        username = row['Username']
-        month = int(row['Month'])
-        day = int(row['Day'])
-        
-        # Do something with the data (e.g., store it in a data structure, print it, etc.)
-        # print(f"{Username}'s birthday is on {month}/{day}.")
-        birthdays[username] = f"{month}/{day}"
+
+    birthday_data = [(f"{row['Month']}/{row['Day']}", row['Username']) for row in reader]
+    sorted_birthdays = sorted(birthday_data, key=lambda row: row[0])
+    for date, users in groupby(sorted_birthdays, key=lambda row: row[0]):
+        birthdays[date] = [user[1] for user in users]
 
 def is_convertible_to_number(s):
     try:
@@ -178,36 +188,63 @@ def raffle_list(update: Update, context: CallbackContext) -> None:
 
   print(raffle_register)
 
-def birthday(update: Update, context: CallbackContext) -> None:
-    birthday_of_today = []
-    
-    current_date = datetime.now()
 
-    current_month = current_date.month
-    current_day = current_date.day
-    for key, value in birthdays.items():
-        if value == f"{current_month}/{current_day}":
-            birthday_of_today.append(key)
-    
-    context.bot.send_message(
-        chat_id=-961065253,
-        text=str(birthday_of_today),
+def send_birthdays(context: CallbackContext) -> None:
+    if not BIRTHDAY_CHATS:
+        return
+
+    current_date = datetime.now()
+    current_birthday = f"{current_date.month}/{current_date.day}"
+
+    if current_birthday not in birthdays:
+        return
+
+    usernames = [f"@{user}" for user in birthdays[current_birthday]]
+
+    if len(usernames) == 1:
+        users_text = usernames[0]
+    else:
+        users_text = ', '.join(usernames[0:-1]) + ' and ' + usernames[-1]
+
+    announcement = prompts.get('birthday_announcement').format(
+        users=users_text,
+        message=random.choice(birthday_messages).rstrip('\n'),
+        points=BIRTHDAY_POINTS
     )
 
-def start_scheduler(update: Update, context: CallbackContext) -> None:
-    context.job_queue.run_once(birthday, 10)
+    for chat_id in BIRTHDAY_CHATS:
+        context.bot.send_message(
+            chat_id=chat_id,
+            text=announcement,
+        )
 
-# Add a command handler to stop the daily task (optional)
-# def stop(update, context):
-#     context.job_queue.stop()
-    
+    for user in birthdays[current_birthday]:
+        lc.add_points(user, BIRTHDAY_POINTS)
+
+
+def start_announcing_birthdays(update: Update, context: CallbackContext) -> None:
+    BIRTHDAY_CHATS.add(update.message.chat_id)
+
+    context.bot.send_message(
+        chat_id=update.message.chat_id,
+        text="I will announce birthdays in this chat, every day at midnight.",
+    )
+
+def stop_announcing_birthdays(update: Update, context: CallbackContext) -> None:
+    BIRTHDAY_CHATS.remove(update.message.chat_id)
+
+    context.bot.send_message(
+        chat_id=update.message.chat_id,
+        text="I will no longer announce birthdays in this chat.",
+    )
+
+
 def main() -> None:
     updater = Updater(TELEGRAM_TOKEN, use_context=True)
 
     # Get the dispatcher to register handlers
     # Then, we register each handler and the conditions the update must meet to trigger it
     dispatcher = updater.dispatcher
-    j = updater.job_queue
 
     # Register commands
     dispatcher.add_handler(CommandHandler("help", help))
@@ -215,11 +252,11 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("donate", donate))
     dispatcher.add_handler(CommandHandler("raffle", raffle))
     dispatcher.add_handler(CommandHandler("raffle_list", raffle_list)) 
-    #dispatcher.add_handler(CommandHandler("birthday", birthday)) 
-    dispatcher.add_handler(CommandHandler("start_scheduler", start_scheduler))
-    
-    #optional
-    #updater.dispatcher.add_handler(CommandHandler('stop', stop))
+    dispatcher.add_handler(CommandHandler("start_announcing_birthdays", start_announcing_birthdays))
+    dispatcher.add_handler(CommandHandler("stop_announcing_birthdays", stop_announcing_birthdays))
+
+    # Register the daily birthday job
+    updater.job_queue.run_daily(send_birthdays, time(0, 0, 0, 0, TIMEZONE))
 
     # Start the Bot
     logging.info('start_polling')
