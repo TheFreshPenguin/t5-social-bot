@@ -1,7 +1,7 @@
 import random
 
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram.ext import Application, CommandHandler, ContextTypes
 
 from helpers.loyverse import LoyverseConnector
 
@@ -32,11 +32,11 @@ class PointsModule:
     def __init__(self, lc: LoyverseConnector):
         self.lc = lc
 
-    def install(self, updater: Updater) -> None:
-        updater.dispatcher.add_handler(CommandHandler("balance", self.__balance))
-        updater.dispatcher.add_handler(CommandHandler("donate", self.__donate))
+    def install(self, application: Application) -> None:
+        application.add_handler(CommandHandler("balance", self.__balance))
+        application.add_handler(CommandHandler("donate", self.__donate))
 
-    def __balance(self, update: Update, context: CallbackContext) -> None:
+    async def __balance(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         username = update.message.from_user.username
 
         # Process the username and send a reply
@@ -50,12 +50,9 @@ class PointsModule:
         else:
             reply_text = "First, create a username in Telegram!"
 
-        context.bot.send_message(
-            chat_id=update.message.chat_id,
-            text=reply_text,
-        )
+        await update.message.reply_text(reply_text)
 
-    def __donate(self, update: Update, context: CallbackContext) -> None:
+    async def __donate(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         # Get the arguments passed with the command
         args = context.args
 
@@ -85,7 +82,4 @@ class PointsModule:
                 else:
                     reply_text = "First, create a username in Telegram!"
 
-        context.bot.send_message(
-            chat_id=update.message.chat_id,
-            text=reply_text,
-        )
+        await update.message.reply_text(reply_text)

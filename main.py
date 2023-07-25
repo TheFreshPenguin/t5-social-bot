@@ -2,7 +2,7 @@ import logging
 import os
 import pytz
 
-from telegram.ext import Updater
+from telegram.ext import ApplicationBuilder
 from dotenv import load_dotenv
 
 from helpers.loyverse import LoyverseConnector
@@ -42,17 +42,14 @@ def main() -> None:
         )
     ]
 
-    updater = Updater(config.telegram_token, use_context=True)
+    application = ApplicationBuilder().token(config.telegram_token).build()
 
     for module in modules:
-        module.install(updater)
+        module.install(application)
 
     # Start the Bot
     logging.info('start_polling')
-    updater.start_polling()
-
-    # Run the bot until you press Ctrl-C
-    updater.idle()
+    application.run_polling()
 
 
 if __name__ == '__main__':

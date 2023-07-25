@@ -5,7 +5,7 @@ import csv
 import random
 
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram.ext import Application, CommandHandler, ContextTypes
 
 from helpers.loyverse import LoyverseConnector
 from helpers.prompt_parser import parse
@@ -37,29 +37,21 @@ class BirthdayModule:
         self.points_to_award = points_to_award
         self.timezone = timezone
 
-    def install(self, updater: Updater) -> None:
-        updater.dispatcher.add_handler(CommandHandler("start_announcing_birthdays", self.__start_announcing_birthdays))
-        updater.dispatcher.add_handler(CommandHandler("stop_announcing_birthdays", self.__stop_announcing_birthdays))
+    def install(self, application: Application) -> None:
+        application.add_handler(CommandHandler("start_announcing_birthdays", self.__start_announcing_birthdays))
+        application.add_handler(CommandHandler("stop_announcing_birthdays", self.__stop_announcing_birthdays))
 
-        updater.job_queue.run_daily(self.__process_birthdays, time(0, 0, 0, 0, self.timezone))
+        application.job_queue.run_daily(self.__process_birthdays, time(0, 0, 0, 0, self.timezone))
 
-    def __start_announcing_birthdays(self, update: Update, context: CallbackContext) -> None:
-        self.chats.add(update.message.chat_id)
+    async def __start_announcing_birthdays(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        self.chats.add(update.effective_chat.id)
+        await update.message.reply_text("I will announce birthdays in this chat, every day at midnight.")
 
-        context.bot.send_message(
-            chat_id=update.message.chat_id,
-            text="I will announce birthdays in this chat, every day at midnight.",
-        )
+    async def __stop_announcing_birthdays(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        self.chats.remove(update.effective_chat.id)
+        await update.message.reply_text("I will no longer announce birthdays in this chat.")
 
-    def __stop_announcing_birthdays(self, update: Update, context: CallbackContext) -> None:
-        self.chats.remove(update.message.chat_id)
-
-        context.bot.send_message(
-            chat_id=update.message.chat_id,
-            text="I will no longer announce birthdays in this chat.",
-        )
-
-    def __process_birthdays(self, context: CallbackContext) -> None:
+    async def __process_birthdays(self, context: ContextTypes.DEFAULT_TYPE) -> None:
         current_date = datetime.now()
         current_birthday = f"{current_date.month}/{current_date.day}"
 
@@ -67,13 +59,13 @@ class BirthdayModule:
             return
 
         self.__add_points(birthdays[current_birthday])
-        self.__announce_birthdays(birthdays[current_birthday], context)
+        await self.__announce_birthdays(birthdays[current_birthday], context)
 
     def __add_points(self, users: list[str]) -> None:
         for user in users:
             self.lc.add_points(user, self.points_to_award)
 
-    def __announce_birthdays(self, users: list[str], context: CallbackContext) -> None:
+    async def __announce_birthdays(self, users: list[str], context: ContextTypes.DEFAULT_TYPE) -> None:
         if not self.chats:
             return
 
@@ -94,7 +86,4 @@ class BirthdayModule:
         )
 
         for chat_id in self.chats:
-            context.bot.send_message(
-                chat_id=chat_id,
-                text=announcement,
-            )
+            await context.bot.send_message(chat_id, announcement)

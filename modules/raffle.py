@@ -1,7 +1,7 @@
 from collections import Counter
 
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram.ext import Application, CommandHandler, ContextTypes
 
 from helpers.loyverse import LoyverseConnector
 
@@ -11,11 +11,11 @@ class RaffleModule:
         self.lc = lc
         self.entries = []
 
-    def install(self, updater: Updater) -> None:
-        updater.dispatcher.add_handler(CommandHandler("raffle", self.__raffle))
-        updater.dispatcher.add_handler(CommandHandler("raffle_list", self.__raffle_list))
+    def install(self, application: Application) -> None:
+        application.add_handler(CommandHandler("raffle", self.__raffle))
+        application.add_handler(CommandHandler("raffle_list", self.__raffle_list))
 
-    def __raffle(self, update: Update, context: CallbackContext) -> None:
+    async def __raffle(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         username = update.message.from_user.username
 
         # Process the username and send a reply
@@ -34,13 +34,10 @@ class RaffleModule:
         else:
             reply_text = "First, create a username in Telegram!"
 
-        context.bot.send_message(
-            chat_id=update.message.chat_id,
-            text=reply_text,
-        )
+        await update.message.reply_text(reply_text)
 
     # A command for god to edit the list for the raffle
-    def __raffle_list(self, update: Update, context: CallbackContext) -> None:
+    async def __raffle_list(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         username = update.message.from_user.username
         if username == "roblevermusic":
             self.entries = context.args
