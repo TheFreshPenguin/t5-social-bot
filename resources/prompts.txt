@@ -85,3 +85,11 @@ Go back to the main menu
 #-- check_trivia_score --#
 
 check all your teams scores !
+
+#-- birthday_announcement --#
+
+La Mulți Ani {users} 🎉
+
+{message}
+
+Enjoy {points} Loyalty Points from T5 Social 🎁
