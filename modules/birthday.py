@@ -60,7 +60,7 @@ class BirthdayModule:
         await update.message.reply_text("I will no longer announce birthdays in this chat.")
 
     async def __process_birthdays(self, context: ContextTypes.DEFAULT_TYPE) -> None:
-        current_date = datetime.now()
+        current_date = datetime.now(self.timezone)
         current_birthday = f"{current_date.month}/{current_date.day}"
 
         if current_birthday not in birthdays:
