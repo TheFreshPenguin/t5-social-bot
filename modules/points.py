@@ -3,6 +3,7 @@ import random
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
+from helpers.access_checker import AccessChecker
 from helpers.loyverse import LoyverseConnector
 
 # sarcasm
@@ -29,8 +30,9 @@ def _remove_at_symbol(text):
 
 
 class PointsModule:
-    def __init__(self, lc: LoyverseConnector):
+    def __init__(self, lc: LoyverseConnector, ac: AccessChecker):
         self.lc = lc
+        self.ac = ac
 
     def install(self, application: Application) -> None:
         application.add_handler(CommandHandler("balance", self.__balance))
@@ -72,7 +74,12 @@ class PointsModule:
                 # Process the username and send a reply
                 if username:
                     try:
-                        if self.lc.donate_points(username, recipient_username, float(args[1])):
+                        if self.ac.can_donate_for_free(username):
+                            successful = self.lc.add_points(recipient_username, float(args[1]))
+                        else:
+                            successful = self.lc.donate_points(username, recipient_username, float(args[1]))
+
+                        if successful:
                             sarc = random.choice(donate_sarcastic_comments).rstrip('\n')
                             reply_text = f"{sarc} @{username} donated {args[1]} points to {args[0]}"
                         else:
