@@ -1,0 +1,7 @@
+#-- birthday_announcement --#
+
+La Mulți Ani {users} 🎉
+
+{message}
+
+Enjoy {points} Loyalty Points from T5 Social 🎁

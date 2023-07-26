@@ -1,0 +1,18 @@
+#-- welcome --#
+
+BeeDeeBeeBoop 🤖
+
+I'm T5 Social's Telegram bot\.
+
+How does this work?
+
+*Check your Loyalty Points*
+
+/balance
+
+*Donate to another member*
+
+/donate \{username\} \{points\}
+e\.g\. `/donate @barbitcheps 33\.3`
+
+Made with ❤️ by [Antoine](tg://user?id=1698340339)
