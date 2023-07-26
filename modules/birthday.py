@@ -44,10 +44,16 @@ class BirthdayModule:
         application.job_queue.run_daily(self.__process_birthdays, time(0, 0, 0, 0, self.timezone))
 
     async def __start_announcing_birthdays(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if update.effective_user.username != "roblevermusic":
+            return
+
         self.chats.add(update.effective_chat.id)
         await update.message.reply_text("I will announce birthdays in this chat, every day at midnight.")
 
     async def __stop_announcing_birthdays(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if update.effective_user.username != "roblevermusic":
+            return
+
         self.chats.remove(update.effective_chat.id)
         await update.message.reply_text("I will no longer announce birthdays in this chat.")
 
