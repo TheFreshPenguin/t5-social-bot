@@ -7,6 +7,7 @@ import random
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
+from helpers.access_checker import AccessChecker
 from helpers.loyverse import LoyverseConnector
 from helpers.prompt_parser import parse
 
@@ -31,8 +32,9 @@ with open('resources/T5 Community Data_Birthdays.csv', 'r') as csvfile:
 
 
 class BirthdayModule:
-    def __init__(self, lc: LoyverseConnector, default_chats: set = None, points_to_award: int = 5, timezone: pytz.timezone = None):
+    def __init__(self, lc: LoyverseConnector, ac: AccessChecker, default_chats: set = None, points_to_award: int = 5, timezone: pytz.timezone = None):
         self.lc = lc
+        self.ac = ac
         self.chats = (default_chats or set()).copy()
         self.points_to_award = points_to_award
         self.timezone = timezone
@@ -44,15 +46,21 @@ class BirthdayModule:
         application.job_queue.run_daily(self.__process_birthdays, time(0, 0, 0, 0, self.timezone))
 
     async def __start_announcing_birthdays(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not self.ac.is_master(update.effective_user.username):
+            return
+
         self.chats.add(update.effective_chat.id)
         await update.message.reply_text("I will announce birthdays in this chat, every day at midnight.")
 
     async def __stop_announcing_birthdays(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not self.ac.is_master(update.effective_user.username):
+            return
+
         self.chats.remove(update.effective_chat.id)
         await update.message.reply_text("I will no longer announce birthdays in this chat.")
 
     async def __process_birthdays(self, context: ContextTypes.DEFAULT_TYPE) -> None:
-        current_date = datetime.now()
+        current_date = datetime.now(self.timezone)
         current_birthday = f"{current_date.month}/{current_date.day}"
 
         if current_birthday not in birthdays:

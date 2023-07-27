@@ -100,7 +100,7 @@ class LoyverseConnector:
 
         customers = self.get_all_customers()
 
-        customer = customers.get(username)
+        customer = self.get_customer_from_username(customers, username)
         new_total_points = customer.get("total_points") - points
 
         if new_total_points < 0:
@@ -117,14 +117,14 @@ class LoyverseConnector:
         customers = self.get_all_customers()
 
         recipient_customer = self.get_customer_from_username(customers, recipient_username)
-        if sender_username != "roblevermusic":  # Rob can send as much points as he wants because he is god 🙏
-            sender_customer = self.get_customer_from_username(customers, sender_username)
-            sender_new_total_points = sender_customer.get("total_points") - points
+        sender_customer = self.get_customer_from_username(customers, sender_username)
 
-            if sender_new_total_points < 0:
-                raise Exception("you cannot donate more points than you have in your balance")
+        sender_new_total_points = sender_customer.get("total_points") - points
 
-            print(self.update_total_points(sender_customer, sender_new_total_points))
+        if sender_new_total_points < 0:
+            raise Exception("you cannot donate more points than you have in your balance")
+
+        print(self.update_total_points(sender_customer, sender_new_total_points))
 
         recipient_new_total_points = recipient_customer.get("total_points") + points
 
