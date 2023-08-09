@@ -1,10 +1,13 @@
 import random
 
 from telegram import Update
+from telegram.constants import ChatType
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 from helpers.access_checker import AccessChecker
-from helpers.loyverse import LoyverseConnector
+from helpers.exceptions import UserFriendlyError
+from helpers.points import Points
+from helpers.loyverse import LoyverseConnector, InsufficientFundsError
 
 # sarcasm
 with open("resources/points_donate_sarcasm.txt", "r") as file:
@@ -12,21 +15,6 @@ with open("resources/points_donate_sarcasm.txt", "r") as file:
 
 with open("resources/points_balance_sarcasm.txt", "r") as file:
     balance_sarcastic_comments = [line.rstrip('\n') for line in file.readlines()]
-
-
-def _is_convertible_to_number(s):
-    try:
-        float(s)  # or int(s) if you only want to check for integers
-        return True
-    except ValueError:
-        return False
-
-
-def _remove_at_symbol(text):
-    if text.startswith('@'):
-        return text[1:]
-    else:
-        return text
 
 
 class PointsModule:
@@ -39,54 +27,57 @@ class PointsModule:
         application.add_handler(CommandHandler("donate", self.__donate))
 
     async def __balance(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        username = update.message.from_user.username
+        try:
+            user = update.message.from_user.username
+            if not user:
+                raise UserFriendlyError("I don't really know who you are - to check your balance you first need to create a username in Telegram.")
 
-        # Process the username and send a reply
-        if username:
-            try:
-                user_balance = int(self.lc.get_balance(username))
-                sarc = random.choice(balance_sarcastic_comments)
-                reply_text = f"{sarc} @{username}, you have {user_balance} T5 Loyalty Points!"
-            except Exception as e:
-                reply_text = f"BeeDeeBeeBoop 🤖 Error : {e}"
-        else:
-            reply_text = "First, create a username in Telegram!"
-
-        await update.message.reply_text(reply_text)
+            balance = self.lc.get_balance(user)
+            sarc = random.choice(balance_sarcastic_comments)
+            await update.message.reply_text(f"{sarc} @{user}, you have {balance.amount} T5 Loyalty Points!")
+        except UserFriendlyError as e:
+            await update.message.reply_text(str(e))
+        except Exception as e:
+            await update.message.reply_text(f"BeeDeeBeeBoop 🤖 Error : {e}")
 
     async def __donate(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         # Get the arguments passed with the command
         args = context.args
 
-        # Process the arguments and send a reply
-        if len(args) < 2:
-            reply_text = f"respect the following format: /donate telegram_username number_of_points"
-        elif not _is_convertible_to_number(args[1]):
-            reply_text = f"number_of_points must be ... a number 😬"
-        else:
-            username = update.message.from_user.username
+        try:
+            if len(args) < 2:
+                raise UserFriendlyError("To use this command you need to write it like this: /donate telegram_username number_of_points")
 
-            # Check if the donor and recipient usernames are the same
-            recipient_username = _remove_at_symbol(args[0])
-            if recipient_username == username:
-                reply_text = "Sorry, self-donations are not allowed."
+            sender = update.message.from_user.username
+            if not sender:
+                raise UserFriendlyError("I don't really know who you are - to donate or receive points you first need to create a username in Telegram.")
+
+            recipient = args[0].lstrip('@')
+            if sender == recipient:
+                raise UserFriendlyError("Donating to yourself is like high-fiving in a mirror – impressive to you, but not making the world a better place!")
+
+            points = Points(args[1])
+            if not points.is_positive():
+                raise UserFriendlyError("Your sense of charity is as high as the amount of points you tried to donate - donations have to be greater than zero.")
+
+            try:
+                if not self.ac.can_donate_for_free(sender):
+                    self.lc.remove_points(sender, points)
+
+                self.lc.add_points(recipient, points)
+            except InsufficientFundsError as error:
+                raise UserFriendlyError("Your generosity is the stuff of legends, but you cannot donate more points than you have in your balance.") from error
+            except Exception as error:
+                raise UserFriendlyError("The donation has failed - perhaps the stars were not right? You can try again later.") from error
+
+            sarc = random.choice(donate_sarcastic_comments).rstrip('\n')
+            if update.message.chat.type == ChatType.PRIVATE:
+                reply = f"{sarc} You donated {args[1]} points to {args[0]}."
             else:
-                # Process the username and send a reply
-                if username:
-                    try:
-                        if self.ac.can_donate_for_free(username):
-                            successful = self.lc.add_points(recipient_username, float(args[1]))
-                        else:
-                            successful = self.lc.donate_points(username, recipient_username, float(args[1]))
+                reply = f"{sarc} @{sender} donated {args[1]} points to {args[0]}."
 
-                        if successful:
-                            sarc = random.choice(donate_sarcastic_comments).rstrip('\n')
-                            reply_text = f"{sarc} @{username} donated {args[1]} points to {args[0]}"
-                        else:
-                            reply_text = "Error: failed to donate points"
-                    except Exception as e:
-                        reply_text = str(e)
-                else:
-                    reply_text = "First, create a username in Telegram!"
-
-        await update.message.reply_text(reply_text)
+            await update.message.reply_text(reply)
+        except UserFriendlyError as e:
+            await update.message.reply_text(str(e))
+        except Exception as e:
+            await update.message.reply_text(f"BeeDeeBeeBoop 🤖 Error : {e}")

@@ -1,5 +1,47 @@
 import requests
 import json
+from typing import Dict, Optional
+
+from helpers.points import Points
+
+
+def _default(obj):
+    if hasattr(obj, 'to_json'):
+        return obj.to_json()
+    raise TypeError(f'Object of type {obj.__class__.__name__} is not JSON serializable')
+
+
+class InsufficientFundsError(Exception):
+    pass
+
+
+class Customer:
+    def __init__(self, customer_id: str, name: str, username: str, points: Points):
+        self.customer_id = customer_id
+        self.name = name
+        self.username = username
+        self.points = points
+
+    def to_json(self) -> dict:
+        return {
+            'id': self.customer_id,
+            'name': self.name,
+            'note': self.username,
+            'total_points': self.points,
+        }
+
+    @staticmethod
+    def from_json(data: dict) -> Optional["Customer"]:
+        username = data.get("note")
+        if not username:
+            return None
+
+        return Customer(
+            customer_id=data.get("id"),
+            name=data.get("name"),
+            username=username,
+            points=Points(data.get("total_points"))
+        )
 
 
 class LoyverseConnector:
@@ -7,127 +49,61 @@ class LoyverseConnector:
     READ_ALL_CUSTOMERS_ENDPOINT = f"{BASE_URL}/customers?updated_at_min=2023-07-01T12:30:00.000Z&limit=250"
     CREATE_OR_UPDATE_CUSTOMER_ENDPOINT = f"{BASE_URL}/customers"
 
-    def __init__(self, token):
+    def __init__(self, token: str, read_only: bool = False):
         self.token = token
+        self.read_only = read_only
 
-    @staticmethod
-    def is_number(variable):
-        return isinstance(variable, (int, float))
+    def get_balance(self, username: str) -> Points:
+        return self.__get_customer(username).points
 
-    @staticmethod
-    def get_customer_from_username(customers, username):
+    def add_points(self, username: str, points: Points) -> None:
+        customer = self.__get_customer(username)
+        customer.points = customer.points.add(points)
+        self.__save_customer(customer)
+
+    def remove_points(self, username, points: Points) -> None:
+        customer = self.__get_customer(username)
+        new_balance = customer.points.subtract(points)
+        if new_balance.is_negative():
+            raise InsufficientFundsError("You don't have enough points")
+
+        customer.points = new_balance
+        self.__save_customer(customer)
+
+    def __get_customer(self, username: str) -> Customer:
+        customers = self.__get_all_customers()
         customer = customers.get(username)
-        if customer:
-            return customer
-        else:
+
+        if not customer:
             raise Exception(f"@{username} is not a recognised user, try again!")
 
-    @staticmethod
-    def read_customers(data):
-        customers = {}
+        return customer
 
-        for c in data.get("customers"):
-            note = c.get("note")
-            if note:
-                infos = {
-                    "note": note,
-                    "id": c.get("id"),
-                    "name": c.get("name"),
-                    "total_points": c.get("total_points")
-                }
-
-                customers[note] = infos
-
-        return customers
-
-    def call_api_get(self, url):
-        headers = {
+    def __get_all_customers(self) -> Dict[str, Customer]:
+        response = requests.get(self.READ_ALL_CUSTOMERS_ENDPOINT, headers={
             "Authorization": f"Bearer {self.token}"
-        }
+        })
 
-        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            print(f"Loyverse get_all_customers error {response.status_code} occurred.")
+            return dict()
 
-        if response.status_code == 200:
-            return response.json()
-        else:
-            print(f"Error {response.status_code} occurred.")
-            return None
+        customers = [Customer.from_json(c) for c in response.json().get('customers')]
+        return {c.username: c for c in customers if c}
 
-    def call_api_post(self, body):
-        headers = {
+    def __save_customer(self, customer: Customer) -> None:
+        data = json.dumps(customer, default=_default)
+        if self.read_only:
+            print(data)
+            return
+
+        response = requests.post(self.CREATE_OR_UPDATE_CUSTOMER_ENDPOINT, data=data, headers={
             "Authorization": f"Bearer {self.token}",
             "Content-Type": "application/json"
-        }
+        })
 
-        response = requests.post(self.CREATE_OR_UPDATE_CUSTOMER_ENDPOINT, headers=headers, data=json.dumps(body))
+        if response.status_code != 200:
+            print(f"Loyverse save_customer error {response.status_code} occurred.")
 
-        if response.status_code == 200:
-            return response.json()
-        else:
-            print(f"Error {response.status_code} occurred.")
-            return None
-
-    def get_all_customers(self):
-        data = self.call_api_get(self.READ_ALL_CUSTOMERS_ENDPOINT)
-        return self.read_customers(data)
-
-    def get_balance(self, username):
-        customers = self.get_all_customers()
-        customer = self.get_customer_from_username(customers, username)
-        return customer.get("total_points")
-
-    def update_total_points(self, customer, total_points):
-        customer["total_points"] = total_points
-        return self.call_api_post(customer)
-
-    def add_points(self, username, points):
-        if not self.is_number(points):
-            raise Exception("added points must be a number")
-        if points <= 0:
-            raise Exception("added points must be non-zero positive")
-
-        customers = self.get_all_customers()
-
-        customer = customers.get(username)
-        new_total_points = customer.get("total_points") + points
-        return self.update_total_points(customer, new_total_points)
-
-    def remove_points(self, username, points):
-        if not self.is_number(points):
-            raise Exception("removed points must be a number")
-        if points <= 0:
-            raise Exception("removed points must be non-zero positive")
-
-        customers = self.get_all_customers()
-
-        customer = self.get_customer_from_username(customers, username)
-        new_total_points = customer.get("total_points") - points
-
-        if new_total_points < 0:
-            raise Exception(f"Oh no @{username}! You don't have enough points for the Community Raffle. Buy some drinks from the bar or beg a friend for a donation!")
-
-        return self.update_total_points(customer, new_total_points)
-
-    def donate_points(self, sender_username, recipient_username, points):
-        if not self.is_number(points):
-            raise Exception("donated points must be a number")
-        if points <= 0:
-            raise Exception("donated points must be non-zero positive")
-
-        customers = self.get_all_customers()
-
-        recipient_customer = self.get_customer_from_username(customers, recipient_username)
-        sender_customer = self.get_customer_from_username(customers, sender_username)
-
-        sender_new_total_points = sender_customer.get("total_points") - points
-
-        if sender_new_total_points < 0:
-            raise Exception("you cannot donate more points than you have in your balance")
-
-        print(self.update_total_points(sender_customer, sender_new_total_points))
-
-        recipient_new_total_points = recipient_customer.get("total_points") + points
-
-        print(self.update_total_points(recipient_customer, recipient_new_total_points))
-        return True
+        print(response.json())
 
