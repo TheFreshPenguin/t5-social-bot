@@ -29,7 +29,7 @@ class RaffleModule:
             try:
                 self.lc.remove_points(user, Points(5))
             except InsufficientFundsError as e:
-                raise UserFriendlyError(f"Oh no @{user}! You don't have enough points for the Community Raffle. Buy some drinks from the bar or beg a friend for a donation!") from error
+                raise UserFriendlyError(f"Oh no @{user}! You don't have enough points for the Community Raffle. Buy some drinks from the bar or beg a friend for a donation!") from e
 
             self.entries.append(user)
             entry_count = Counter(self.entries)
