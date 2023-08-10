@@ -58,16 +58,15 @@ class LoyverseConnector:
 
     def add_points(self, username: str, points: Points) -> None:
         customer = self.__get_customer(username)
-        customer.points = customer.points.add(points)
+        customer.points += points
         self.__save_customer(customer)
 
     def remove_points(self, username, points: Points) -> None:
         customer = self.__get_customer(username)
-        new_balance = customer.points.subtract(points)
-        if new_balance.is_negative():
+        if customer.points < points:
             raise InsufficientFundsError("You don't have enough points")
 
-        customer.points = new_balance
+        customer.points -= points
         self.__save_customer(customer)
 
     def __get_customer(self, username: str) -> Customer:

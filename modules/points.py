@@ -34,7 +34,7 @@ class PointsModule:
 
             balance = self.lc.get_balance(user)
             sarc = random.choice(balance_sarcastic_comments)
-            await update.message.reply_text(f"{sarc} @{user}, you have {balance.amount} T5 Loyalty Points!")
+            await update.message.reply_text(f"{sarc} @{user}, you have {balance} T5 Loyalty Points!")
         except UserFriendlyError as e:
             await update.message.reply_text(str(e))
         except Exception as e:
