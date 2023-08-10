@@ -6,12 +6,14 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 from helpers.access_checker import AccessChecker
 from helpers.exceptions import UserFriendlyError
 from helpers.points import Points
-from helpers.loyverse import LoyverseConnector, InsufficientFundsError
+
+from integrations.loyverse.api import LoyverseApi
+from integrations.loyverse.exceptions import InsufficientFundsError
 
 
 class RaffleModule:
-    def __init__(self, lc: LoyverseConnector, ac: AccessChecker):
-        self.lc = lc
+    def __init__(self, loy: LoyverseApi, ac: AccessChecker):
+        self.loy = loy
         self.ac = ac
         self.entries = []
 
@@ -27,7 +29,7 @@ class RaffleModule:
                 raise UserFriendlyError('You first need to choose a username in Telegram')
 
             try:
-                self.lc.remove_points(user, Points(5))
+                self.loy.remove_points(user, Points(5))
             except InsufficientFundsError as e:
                 raise UserFriendlyError(f"Oh no @{user}! You don't have enough points for the Community Raffle. Buy some drinks from the bar or beg a friend for a donation!") from e
 

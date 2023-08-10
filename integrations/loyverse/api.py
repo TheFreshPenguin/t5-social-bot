@@ -1,50 +1,15 @@
 import requests
 import json
-from typing import Dict, Optional
+from typing import Dict
 
+import helpers.json
 from helpers.points import Points
 
-
-def _default(obj):
-    if hasattr(obj, 'to_json'):
-        return obj.to_json()
-    raise TypeError(f'Object of type {obj.__class__.__name__} is not JSON serializable')
+from integrations.loyverse.customer import Customer
+from integrations.loyverse.exceptions import InsufficientFundsError
 
 
-class InsufficientFundsError(Exception):
-    pass
-
-
-class Customer:
-    def __init__(self, customer_id: str, name: str, username: str, points: Points):
-        self.customer_id = customer_id
-        self.name = name
-        self.username = username
-        self.points = points
-
-    def to_json(self) -> dict:
-        return {
-            'id': self.customer_id,
-            'name': self.name,
-            'note': self.username,
-            'total_points': self.points,
-        }
-
-    @staticmethod
-    def from_json(data: dict) -> Optional["Customer"]:
-        username = data.get("note")
-        if not username:
-            return None
-
-        return Customer(
-            customer_id=data.get("id"),
-            name=data.get("name"),
-            username=username,
-            points=Points(data.get("total_points"))
-        )
-
-
-class LoyverseConnector:
+class LoyverseApi:
     BASE_URL = "https://api.loyverse.com/v1.0"
     READ_ALL_CUSTOMERS_ENDPOINT = f"{BASE_URL}/customers?updated_at_min=2023-07-01T12:30:00.000Z&limit=250"
     CREATE_OR_UPDATE_CUSTOMER_ENDPOINT = f"{BASE_URL}/customers"
@@ -91,7 +56,7 @@ class LoyverseConnector:
         return {c.username: c for c in customers if c}
 
     def __save_customer(self, customer: Customer) -> None:
-        data = json.dumps(customer, default=_default)
+        data = json.dumps(customer, default=helpers.json.default)
         if self.read_only:
             print(data)
             return

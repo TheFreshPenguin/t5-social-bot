@@ -6,8 +6,10 @@ from telegram.ext import ApplicationBuilder
 from dotenv import load_dotenv
 
 from helpers.access_checker import AccessChecker
-from helpers.loyverse import LoyverseConnector
 from helpers.points import Points
+
+from integrations.loyverse.api import LoyverseApi
+
 from modules.help import HelpModule
 from modules.points import PointsModule
 from modules.raffle import RaffleModule
@@ -33,7 +35,7 @@ class MainConfig:
 
 def main() -> None:
     config = MainConfig()
-    lc = LoyverseConnector(config.loyverse_token, read_only=config.loyverse_read_only)
+    loy = LoyverseApi(config.loyverse_token, read_only=config.loyverse_read_only)
     ac = AccessChecker(
         masters=config.masters,
         point_masters=config.point_masters,
@@ -41,10 +43,10 @@ def main() -> None:
 
     modules = [
         HelpModule(),
-        PointsModule(lc=lc, ac=ac),
-        RaffleModule(lc=lc, ac=ac),
+        PointsModule(loy=loy, ac=ac),
+        RaffleModule(loy=loy, ac=ac),
         BirthdayModule(
-            lc=lc,
+            loy=loy,
             ac=ac,
             default_chats=config.birthday_chats,
             points_to_award=config.birthday_points,

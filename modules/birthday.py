@@ -8,9 +8,10 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 from helpers.access_checker import AccessChecker
-from helpers.loyverse import LoyverseConnector
 from helpers.points import Points
 from helpers.prompt_parser import parse
+
+from integrations.loyverse.api import LoyverseApi
 
 prompts = parse("resources/birthday_prompts.txt")
 
@@ -33,8 +34,8 @@ with open('resources/T5 Community Data_Birthdays.csv', 'r') as csvfile:
 
 
 class BirthdayModule:
-    def __init__(self, lc: LoyverseConnector, ac: AccessChecker, default_chats: set = None, points_to_award: Points = Points(5), timezone: pytz.timezone = None):
-        self.lc = lc
+    def __init__(self, loy: LoyverseApi, ac: AccessChecker, default_chats: set = None, points_to_award: Points = Points(5), timezone: pytz.timezone = None):
+        self.loy = loy
         self.ac = ac
         self.chats = (default_chats or set()).copy()
         self.points_to_award = points_to_award
@@ -72,7 +73,7 @@ class BirthdayModule:
 
     def __add_points(self, users: list[str]) -> None:
         for user in users:
-            self.lc.add_points(user, self.points_to_award)
+            self.loy.add_points(user, self.points_to_award)
 
     async def __announce_birthdays(self, users: list[str], context: ContextTypes.DEFAULT_TYPE) -> None:
         if not self.chats:
