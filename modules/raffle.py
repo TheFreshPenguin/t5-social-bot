@@ -4,7 +4,9 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 from helpers.access_checker import AccessChecker
-from helpers.loyverse import LoyverseConnector
+from helpers.exceptions import UserFriendlyError
+from helpers.points import Points
+from helpers.loyverse import LoyverseConnector, InsufficientFundsError
 
 
 class RaffleModule:
@@ -18,25 +20,30 @@ class RaffleModule:
         application.add_handler(CommandHandler("raffle_list", self.__raffle_list))
 
     async def __raffle(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        username = update.message.from_user.username
+        user = update.message.from_user.username
 
-        # Process the username and send a reply
-        if username:
+        try:
+            if not user:
+                raise UserFriendlyError('You first need to choose a username in Telegram')
+
             try:
-                self.lc.remove_points(username, 5)
-                self.entries.append(username)
-                entry_count = Counter(self.entries)
-                reply_text = f"Congrats @{username}. You just bought a ticket for the Community Raffle. Thanks for supporting and good luck!\n\n"
+                self.lc.remove_points(user, Points(5))
+            except InsufficientFundsError as e:
+                raise UserFriendlyError(f"Oh no @{user}! You don't have enough points for the Community Raffle. Buy some drinks from the bar or beg a friend for a donation!") from e
 
-                # Display the list of entries with entry counts
-                for entry, count in entry_count.items():
-                    reply_text += f"@{entry} - {count} Ticket(s)\n"
-            except Exception as e:
-                reply_text = str(e)
-        else:
-            reply_text = "First, create a username in Telegram!"
+            self.entries.append(user)
+            entry_count = Counter(self.entries)
+            reply = f"Congrats @{user}. You just bought a ticket for the Community Raffle. Thanks for supporting and good luck!\n\n"
 
-        await update.message.reply_text(reply_text)
+            # Display the list of entries with entry counts
+            for entry, count in entry_count.items():
+                reply += f"@{entry} - {count} Ticket(s)\n"
+
+            await update.message.reply_text(reply)
+        except UserFriendlyError as e:
+            await update.message.reply_text(str(e))
+        except Exception as e:
+            await update.message.reply_text(f"BeeDeeBeeBoop 🤖 Error : {e}")
 
     # A command for god to edit the list for the raffle
     async def __raffle_list(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
