@@ -47,6 +47,7 @@ class BirthdayModule:
     def install(self, application: Application) -> None:
         application.add_handler(CommandHandler("start_announcing_birthdays", self.__start_announcing_birthdays))
         application.add_handler(CommandHandler("stop_announcing_birthdays", self.__stop_announcing_birthdays))
+        application.add_handler(CommandHandler("force_announce_birthdays", self.__force_announce_birthdays))
 
         daily_time = time(0, 0, 0, 0, self.timezone)
         application.job_queue.run_daily(self.__process_birthdays, daily_time)
@@ -68,6 +69,12 @@ class BirthdayModule:
         self.chats.remove(update.effective_chat.id)
         await update.message.reply_text("I will no longer announce birthdays in this chat.")
         logger.info(f'Birthdays will be announced to {self.chats}')
+
+    async def __force_announce_birthdays(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not self.ac.is_master(update.effective_user.username):
+            return
+
+        await self.__process_birthdays(context)
 
     async def __process_birthdays(self, context: ContextTypes.DEFAULT_TYPE) -> None:
         current_date = datetime.now(self.timezone)
