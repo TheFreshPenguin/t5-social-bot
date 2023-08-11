@@ -17,12 +17,12 @@ from modules.birthday import BirthdayModule
 
 load_dotenv()
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
 class MainConfig:
     def __init__(self):
+        self.log_level = logging.getLevelName(os.getenv('log_level', 'INFO'))
         self.telegram_token = os.getenv('telegram_token')
         self.loyverse_token = os.getenv('loyverse_token')
         self.loyverse_read_only = bool(int(os.getenv('loyverse_read_only', 0)))
@@ -35,6 +35,8 @@ class MainConfig:
 
 def main() -> None:
     config = MainConfig()
+    logging.basicConfig(level=config.log_level, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
     loy = LoyverseApi(config.loyverse_token, read_only=config.loyverse_read_only)
     ac = AccessChecker(
         masters=config.masters,
@@ -60,7 +62,7 @@ def main() -> None:
         module.install(application)
 
     # Start the Bot
-    logging.info('start_polling')
+    logger.info('start_polling')
     application.run_polling()
 
 

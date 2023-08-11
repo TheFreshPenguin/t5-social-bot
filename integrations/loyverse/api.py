@@ -1,3 +1,4 @@
+import logging
 import requests
 import json
 from typing import Dict
@@ -7,6 +8,8 @@ from helpers.points import Points
 
 from integrations.loyverse.customer import Customer
 from integrations.loyverse.exceptions import InsufficientFundsError
+
+logger = logging.getLogger(__name__)
 
 
 class LoyverseApi:
@@ -49,7 +52,7 @@ class LoyverseApi:
         })
 
         if response.status_code != 200:
-            print(f"Loyverse get_all_customers error {response.status_code} occurred.")
+            logger.error(f"Loyverse get_all_customers error {response.status_code} occurred.")
             return dict()
 
         customers = [Customer.from_json(c) for c in response.json().get('customers')]
@@ -58,7 +61,7 @@ class LoyverseApi:
     def __save_customer(self, customer: Customer) -> None:
         data = json.dumps(customer, default=helpers.json.default)
         if self.read_only:
-            print(data)
+            logger.info(data)
             return
 
         response = requests.post(self.CREATE_OR_UPDATE_CUSTOMER_ENDPOINT, data=data, headers={
@@ -67,7 +70,7 @@ class LoyverseApi:
         })
 
         if response.status_code != 200:
-            print(f"Loyverse save_customer error {response.status_code} occurred.")
+            logger.error(f"Loyverse save_customer error {response.status_code} occurred.")
 
-        print(response.json())
+        logger.info(response.json())
 

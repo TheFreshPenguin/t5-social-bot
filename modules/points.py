@@ -1,3 +1,4 @@
+import logging
 import random
 
 from telegram import Update
@@ -10,6 +11,8 @@ from helpers.points import Points
 
 from integrations.loyverse.api import LoyverseApi
 from integrations.loyverse.exceptions import InsufficientFundsError
+
+logger = logging.getLogger(__name__)
 
 # sarcasm
 with open("resources/points_donate_sarcasm.txt", "r") as file:
@@ -27,6 +30,7 @@ class PointsModule:
     def install(self, application: Application) -> None:
         application.add_handler(CommandHandler("balance", self.__balance))
         application.add_handler(CommandHandler("donate", self.__donate))
+        logger.info("Points module installed")
 
     async def __balance(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         try:
@@ -40,6 +44,7 @@ class PointsModule:
         except UserFriendlyError as e:
             await update.message.reply_text(str(e))
         except Exception as e:
+            logger.exception(e)
             await update.message.reply_text(f"BeeDeeBeeBoop 🤖 Error : {e}")
 
     async def __donate(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -82,4 +87,5 @@ class PointsModule:
         except UserFriendlyError as e:
             await update.message.reply_text(str(e))
         except Exception as e:
+            logger.exception(e)
             await update.message.reply_text(f"BeeDeeBeeBoop 🤖 Error : {e}")

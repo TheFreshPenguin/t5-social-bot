@@ -1,3 +1,4 @@
+import logging
 from collections import Counter
 
 from telegram import Update
@@ -10,6 +11,8 @@ from helpers.points import Points
 from integrations.loyverse.api import LoyverseApi
 from integrations.loyverse.exceptions import InsufficientFundsError
 
+logger = logging.getLogger(__name__)
+
 
 class RaffleModule:
     def __init__(self, loy: LoyverseApi, ac: AccessChecker):
@@ -20,6 +23,7 @@ class RaffleModule:
     def install(self, application: Application) -> None:
         application.add_handler(CommandHandler("raffle", self.__raffle))
         application.add_handler(CommandHandler("raffle_list", self.__raffle_list))
+        logger.info(f"Raffle module installed")
 
     async def __raffle(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         user = update.message.from_user.username
@@ -45,6 +49,7 @@ class RaffleModule:
         except UserFriendlyError as e:
             await update.message.reply_text(str(e))
         except Exception as e:
+            logger.exception(e)
             await update.message.reply_text(f"BeeDeeBeeBoop 🤖 Error : {e}")
 
     # A command for god to edit the list for the raffle
@@ -53,4 +58,4 @@ class RaffleModule:
             return
 
         self.entries = context.args
-        print(self.entries)
+        logger.info(self.entries)
