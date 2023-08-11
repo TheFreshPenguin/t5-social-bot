@@ -1,3 +1,4 @@
+import logging
 from collections import Counter
 
 from telegram import Update
@@ -6,18 +7,23 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 from helpers.access_checker import AccessChecker
 from helpers.exceptions import UserFriendlyError
 from helpers.points import Points
-from helpers.loyverse import LoyverseConnector, InsufficientFundsError
+
+from integrations.loyverse.api import LoyverseApi
+from integrations.loyverse.exceptions import InsufficientFundsError
+
+logger = logging.getLogger(__name__)
 
 
 class RaffleModule:
-    def __init__(self, lc: LoyverseConnector, ac: AccessChecker):
-        self.lc = lc
+    def __init__(self, loy: LoyverseApi, ac: AccessChecker):
+        self.loy = loy
         self.ac = ac
         self.entries = []
 
     def install(self, application: Application) -> None:
         application.add_handler(CommandHandler("raffle", self.__raffle))
         application.add_handler(CommandHandler("raffle_list", self.__raffle_list))
+        logger.info(f"Raffle module installed")
 
     async def __raffle(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         user = update.message.from_user.username
@@ -27,7 +33,7 @@ class RaffleModule:
                 raise UserFriendlyError('You first need to choose a username in Telegram')
 
             try:
-                self.lc.remove_points(user, Points(5))
+                self.loy.remove_points(user, Points(5))
             except InsufficientFundsError as e:
                 raise UserFriendlyError(f"Oh no @{user}! You don't have enough points for the Community Raffle. Buy some drinks from the bar or beg a friend for a donation!") from e
 
@@ -43,6 +49,7 @@ class RaffleModule:
         except UserFriendlyError as e:
             await update.message.reply_text(str(e))
         except Exception as e:
+            logger.exception(e)
             await update.message.reply_text(f"BeeDeeBeeBoop 🤖 Error : {e}")
 
     # A command for god to edit the list for the raffle
@@ -51,4 +58,4 @@ class RaffleModule:
             return
 
         self.entries = context.args
-        print(self.entries)
+        logger.info(self.entries)

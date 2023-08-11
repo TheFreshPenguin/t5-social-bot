@@ -1,3 +1,4 @@
+import logging
 import random
 
 from telegram import Update
@@ -7,7 +8,11 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 from helpers.access_checker import AccessChecker
 from helpers.exceptions import UserFriendlyError
 from helpers.points import Points
-from helpers.loyverse import LoyverseConnector, InsufficientFundsError
+
+from integrations.loyverse.api import LoyverseApi
+from integrations.loyverse.exceptions import InsufficientFundsError
+
+logger = logging.getLogger(__name__)
 
 # sarcasm
 with open("resources/points_donate_sarcasm.txt", "r") as file:
@@ -18,13 +23,14 @@ with open("resources/points_balance_sarcasm.txt", "r") as file:
 
 
 class PointsModule:
-    def __init__(self, lc: LoyverseConnector, ac: AccessChecker):
-        self.lc = lc
+    def __init__(self, loy: LoyverseApi, ac: AccessChecker):
+        self.loy = loy
         self.ac = ac
 
     def install(self, application: Application) -> None:
         application.add_handler(CommandHandler("balance", self.__balance))
         application.add_handler(CommandHandler("donate", self.__donate))
+        logger.info("Points module installed")
 
     async def __balance(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         try:
@@ -32,12 +38,13 @@ class PointsModule:
             if not user:
                 raise UserFriendlyError("I don't really know who you are - to check your balance you first need to create a username in Telegram.")
 
-            balance = self.lc.get_balance(user)
+            balance = self.loy.get_balance(user).to_integral()
             sarc = random.choice(balance_sarcastic_comments)
-            await update.message.reply_text(f"{sarc} @{user}, you have {balance.amount} T5 Loyalty Points!")
+            await update.message.reply_text(f"{sarc} @{user}, you have {balance} T5 Loyalty Points!")
         except UserFriendlyError as e:
             await update.message.reply_text(str(e))
         except Exception as e:
+            logger.exception(e)
             await update.message.reply_text(f"BeeDeeBeeBoop 🤖 Error : {e}")
 
     async def __donate(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -62,9 +69,9 @@ class PointsModule:
 
             try:
                 if not self.ac.can_donate_for_free(sender):
-                    self.lc.remove_points(sender, points)
+                    self.loy.remove_points(sender, points)
 
-                self.lc.add_points(recipient, points)
+                self.loy.add_points(recipient, points)
             except InsufficientFundsError as error:
                 raise UserFriendlyError("Your generosity is the stuff of legends, but you cannot donate more points than you have in your balance.") from error
             except Exception as error:
@@ -80,4 +87,5 @@ class PointsModule:
         except UserFriendlyError as e:
             await update.message.reply_text(str(e))
         except Exception as e:
+            logger.exception(e)
             await update.message.reply_text(f"BeeDeeBeeBoop 🤖 Error : {e}")
