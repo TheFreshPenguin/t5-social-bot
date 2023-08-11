@@ -49,5 +49,8 @@ class Points:
     def is_zero(self) -> bool:
         return self.amount.is_zero()
 
+    def to_integral(self) -> "Points":
+        return Points(self.amount.to_integral(rounding=ROUND_FLOOR))
+
     def to_json(self) -> float:
         return float(self.amount)

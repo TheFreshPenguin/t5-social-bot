@@ -38,7 +38,7 @@ class PointsModule:
             if not user:
                 raise UserFriendlyError("I don't really know who you are - to check your balance you first need to create a username in Telegram.")
 
-            balance = self.loy.get_balance(user)
+            balance = self.loy.get_balance(user).to_integral()
             sarc = random.choice(balance_sarcastic_comments)
             await update.message.reply_text(f"{sarc} @{user}, you have {balance} T5 Loyalty Points!")
         except UserFriendlyError as e:
