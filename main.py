@@ -15,6 +15,7 @@ from modules.help import HelpModule
 from modules.points import PointsModule
 from modules.raffle import RaffleModule
 from modules.birthday import BirthdayModule
+from modules.events import EventsModule
 
 load_dotenv()
 
@@ -62,7 +63,8 @@ def main() -> None:
             default_chats=config.birthday_chats,
             points_to_award=config.birthday_points,
             timezone=config.timezone,
-        )
+        ),
+        EventsModule(repository=repository, timezone=config.timezone),
     ]
 
     application = ApplicationBuilder().token(config.telegram_token).build()
