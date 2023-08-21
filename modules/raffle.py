@@ -4,6 +4,7 @@ from collections import Counter
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
+from modules.base_module import BaseModule
 from helpers.access_checker import AccessChecker
 from helpers.exceptions import UserFriendlyError
 from helpers.points import Points
@@ -14,7 +15,7 @@ from integrations.loyverse.exceptions import InsufficientFundsError
 logger = logging.getLogger(__name__)
 
 
-class RaffleModule:
+class RaffleModule(BaseModule):
     def __init__(self, loy: LoyverseApi, ac: AccessChecker):
         self.loy = loy
         self.ac = ac

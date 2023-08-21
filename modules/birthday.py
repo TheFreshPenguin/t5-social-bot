@@ -8,6 +8,7 @@ import random
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
+from modules.base_module import BaseModule
 from helpers.access_checker import AccessChecker
 from helpers.points import Points
 from helpers.prompt_parser import parse
@@ -36,7 +37,7 @@ with open('resources/T5 Community Data_Birthdays.csv', 'r') as csvfile:
         birthdays[date] = [user[1] for user in grouped_users]
 
 
-class BirthdayModule:
+class BirthdayModule(BaseModule):
     def __init__(self, loy: LoyverseApi, ac: AccessChecker, default_chats: set = None, points_to_award: Points = Points(5), timezone: pytz.timezone = None):
         self.loy = loy
         self.ac = ac

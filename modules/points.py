@@ -5,6 +5,7 @@ from telegram import Update
 from telegram.constants import ChatType
 from telegram.ext import Application, CommandHandler, ContextTypes
 
+from modules.base_module import BaseModule
 from helpers.access_checker import AccessChecker
 from helpers.exceptions import UserFriendlyError
 from helpers.points import Points
@@ -22,7 +23,7 @@ with open("resources/points_balance_sarcasm.txt", "r") as file:
     balance_sarcastic_comments = [line.rstrip('\n') for line in file.readlines()]
 
 
-class PointsModule:
+class PointsModule(BaseModule):
     def __init__(self, loy: LoyverseApi, ac: AccessChecker):
         self.loy = loy
         self.ac = ac

@@ -5,6 +5,7 @@ import logging
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes, filters
 
+from modules.base_module import BaseModule
 from helpers.exceptions import UserFriendlyError
 from data.repository import DataRepository
 from data.models.event import Event
@@ -12,7 +13,7 @@ from data.models.event import Event
 logger = logging.getLogger(__name__)
 
 
-class EventsModule:
+class EventsModule(BaseModule):
     def __init__(self, repository: DataRepository, timezone: pytz.timezone = None, upcoming_days: int = 6):
         self.repository = repository
         self.timezone = timezone
