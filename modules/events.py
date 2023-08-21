@@ -2,10 +2,12 @@ import pytz
 from datetime import datetime, timedelta
 import logging
 
-from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes, filters
+from telegram import Update, InlineKeyboardButton
+from telegram.constants import ChatType, ParseMode
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, filters
 
 from modules.base_module import BaseModule
+from helpers.access_checker import AccessChecker
 from helpers.exceptions import UserFriendlyError
 from data.repository import DataRepository
 from data.models.event import Event
@@ -14,18 +16,31 @@ logger = logging.getLogger(__name__)
 
 
 class EventsModule(BaseModule):
-    def __init__(self, repository: DataRepository, timezone: pytz.timezone = None, upcoming_days: int = 6):
+    def __init__(self, ac: AccessChecker, repository: DataRepository, timezone: pytz.timezone = None, upcoming_days: int = 6):
+        self.ac = ac
         self.repository = repository
         self.timezone = timezone
         self.upcoming_days = upcoming_days
 
     def install(self, application: Application) -> None:
-        application.add_handler(CommandHandler("start", self.__display_events, filters.Regex('event')))
-        application.add_handler(CommandHandler("event", self.__display_events))
-        application.add_handler(CommandHandler("events", self.__display_events))
+        application.add_handlers([
+            CommandHandler("start", self.__display_events, filters.Regex('event')),
+            CommandHandler("event", self.__display_events),
+            CommandHandler("events", self.__display_events),
+            CallbackQueryHandler(self.__display_events, pattern="^events/list$"),
+        ])
         logger.info("Events module installed")
 
+    def get_menu_buttons(self) -> list[list[InlineKeyboardButton]]:
+        return [
+            [InlineKeyboardButton('Check upcoming events', callback_data='events/list')],
+        ]
+
     async def __display_events(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        # This command can only be run in private chats, except if you are a bot master
+        if update.message.chat.type != ChatType.PRIVATE and not self.ac.is_master(update.effective_user.username):
+            return
+
         try:
             all_events = self.repository.get_events()
             now = datetime.now(self.timezone)
@@ -33,13 +48,17 @@ class EventsModule(BaseModule):
             today_text = self.__format_today(all_events, now)
             upcoming_text = self.__format_upcoming(all_events, now, self.upcoming_days)
             reply = self.__merge_texts(today_text, upcoming_text)
-
-            await update.message.reply_html(reply)
         except UserFriendlyError as e:
-            await update.message.reply_text(str(e))
+            reply = str(e)
         except Exception as e:
             logger.exception(e)
-            await update.message.reply_text(f"BeeDeeBeeBoop 🤖 Error : {e}")
+            reply = f"BeeDeeBeeBoop 🤖 Error : {e}"
+
+        if update.callback_query:
+            await update.callback_query.answer()
+            await update.callback_query.edit_message_text(reply, parse_mode=ParseMode.HTML)
+        else:
+            await update.message.reply_html(reply)
 
     @staticmethod
     def __merge_texts(today: str, upcoming: str) -> str:

@@ -2,17 +2,16 @@
 
 BeeDeeBeeBoop 🤖
 
-I'm T5 Social's Telegram bot\.
+I'm T5 Social's Telegram bot\! I keep track of your *Loyalty Points*, which you get for ordering at the bar\. I can also help you stay up\-to\-date with our events\.
 
-How does this work?
-
-*Check your Loyalty Points*
-
-/balance
-
-*Donate to another member*
-
-/donate \{username\} \{points\}
-e\.g\. `/donate @barbitcheps 33\.3`
+How may I help you today?
 
 Made with ❤️ by [Antoine](tg://user?id=1698340339)
+
+#-- welcome_general --#
+
+BeeDeeBeeBoop 🤖
+
+I'm T5 Social's Telegram bot\!
+
+[Talk to me directly](https://t.me/T5socialBot?start=help) to learn how I can be of help\!

@@ -54,7 +54,6 @@ def main() -> None:
     )
 
     modules = [
-        HelpModule(),
         PointsModule(loy=loy, ac=ac),
         RaffleModule(loy=loy, ac=ac),
         BirthdayModule(
@@ -64,11 +63,14 @@ def main() -> None:
             points_to_award=config.birthday_points,
             timezone=config.timezone,
         ),
-        EventsModule(repository=repository, timezone=config.timezone),
+        EventsModule(repository=repository, timezone=config.timezone, ac=ac),
     ]
 
-    application = ApplicationBuilder().token(config.telegram_token).build()
+    # The help module must be last because it catches all chat, and it picks up menu buttons from the other modules
+    help_module = HelpModule(modules.copy())  # shallow copy
+    modules.append(help_module)
 
+    application = ApplicationBuilder().token(config.telegram_token).build()
     for module in modules:
         module.install(application)
 

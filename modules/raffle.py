@@ -2,7 +2,7 @@ import logging
 from collections import Counter
 
 from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, ContextTypes, filters
 
 from modules.base_module import BaseModule
 from helpers.access_checker import AccessChecker
@@ -22,12 +22,12 @@ class RaffleModule(BaseModule):
         self.entries = []
 
     def install(self, application: Application) -> None:
-        application.add_handler(CommandHandler("raffle", self.__raffle))
-        application.add_handler(CommandHandler("raffle_list", self.__raffle_list))
+        application.add_handler(CommandHandler("raffle", self.__raffle, filters.ChatType.PRIVATE))
+        application.add_handler(CommandHandler("raffle_list", self.__raffle_list, filters.ChatType.PRIVATE))
         logger.info(f"Raffle module installed")
 
     async def __raffle(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        user = update.message.from_user.username
+        user = update.effective_user.username
 
         try:
             if not user:
