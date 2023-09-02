@@ -1,10 +1,12 @@
 #-- welcome --#
 
-BeeDeeBeeBoop 🤖
+I am the T5 Social Telegram bot\!
 
-I'm T5 Social's Telegram bot\! I keep track of your *Loyalty Points*, which you get for ordering at the bar\. I can also help you stay up\-to\-date with our events\.
+Did you know that every time you visit T5, 10% of your spend is converted into *Loyalty Points*\. These can be redeemed on future visits, or even gifted to others\!
 
-How may I help you today?
+I can also let you know about upcoming *Social Events* in the community\.
+
+How may I help you today\?
 
 Made with ❤️ by [Antoine](tg://user?id=1698340339)
 

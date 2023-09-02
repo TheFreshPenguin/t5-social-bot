@@ -34,12 +34,12 @@ class EventsModule(BaseModule):
 
     def get_menu_buttons(self) -> list[list[InlineKeyboardButton]]:
         return [
-            [InlineKeyboardButton('Check upcoming events', callback_data='events/list')],
+            [InlineKeyboardButton('Upcoming Social Events', callback_data='events/list')],
         ]
 
     async def __display_events(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         # This command can only be run in private chats, except if you are a bot master
-        if update.message.chat.type != ChatType.PRIVATE and not self.ac.is_master(update.effective_user.username):
+        if not (update.callback_query or update.message.chat.type == ChatType.PRIVATE) and not self.ac.is_master(update.effective_user.username):
             return
 
         try:

@@ -40,8 +40,8 @@ class PointsModule(BaseModule):
 
     def get_menu_buttons(self) -> list[list[InlineKeyboardButton]]:
         return [
-            [InlineKeyboardButton('Check your points', callback_data='points/balance')],
-            [InlineKeyboardButton('Donate points', callback_data='points/donate_help')],
+            [InlineKeyboardButton('Check Your Points', callback_data='points/balance')],
+            [InlineKeyboardButton('Donate Points', callback_data='points/donate_help')],
         ]
 
     async def __balance(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
