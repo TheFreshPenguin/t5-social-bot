@@ -1,6 +1,7 @@
 import pytz
 from datetime import datetime, timedelta
 import logging
+from typing import Optional
 
 from telegram import Update, InlineKeyboardButton
 from telegram.constants import ChatType, ParseMode
@@ -63,7 +64,7 @@ class EventsModule(BaseModule):
     @staticmethod
     def __merge_texts(today: str, upcoming: str) -> str:
         if today and upcoming:
-            return today + "\n\n" + "Here are other <b>Upcoming Events</b>:\n\n" + upcoming
+            return today + "\n\n" + "<b>Upcoming Events</b>:\n\n" + upcoming
         elif today:
             return today
         elif upcoming:
@@ -80,16 +81,13 @@ class EventsModule(BaseModule):
             return ""
 
         main_event = events[-1]
-        main_text = EventsModule.__today_event(events[-1], now)
-        today_text = f"Join us today for {main_text}!"
-
-        if main_event.description:
-            today_text += f"\n{main_event.description}"
+        main_text = EventsModule.__main_event(events[-1], now)
+        today_text = f"<b>Tonight's Event:</b>\n\n{main_text}"
 
         if len(events) > 1:
             secondary_events = events[0:-1]
-            secondary_text = EventsModule.__enumerate([EventsModule.__today_event(e, now) for e in secondary_events])
-            today_text += f"\n\nBut wait, there's more!\nWe also have {secondary_text}."
+            secondary_text = "\n".join([EventsModule.__upcoming_event(e, now) for e in secondary_events])
+            today_text += f"\n\n<b>Also Happening:</b>\n\n{secondary_text}"
 
         return today_text
 
@@ -109,23 +107,20 @@ class EventsModule(BaseModule):
         return "\n\n".join(upcoming_texts)
 
     @staticmethod
-    def __today_event(e: Event, now: datetime) -> str:
+    def __main_event(e: Event, now: datetime) -> str:
         return (
-            f"<b>{e.name}</b>, "
-            + ("happening <b>right now</b>" if e.start_date < now else f"starting at <b>{EventsModule.__event_time(e.start_date)}</b>")
-            + (f", hosted by <b>{e.host}</b>" if e.host else "")
+            f"{e.name} @ {EventsModule.__event_time(e.start_date, now)}"
+            + (f"\nHosted by {e.host}" if e.host else "")
+            + (f"\n{e.description}" if e.description else "")
         )
 
     @staticmethod
-    def __upcoming_event(e: Event) -> str:
-        return (
-            f"{e.name} | {EventsModule.__event_time(e.start_date)}" +
-            (f" | {e.host}" if e.host else "")
-        )
+    def __upcoming_event(e: Event, now: Optional[datetime] = None) -> str:
+        return f"{e.name} | {EventsModule.__event_time(e.start_date, now)} | " + (e.host if e.host else "")
 
     @staticmethod
-    def __event_time(date: datetime) -> str:
-        return date.strftime('%I:%M%p').lstrip('0').replace(':00', '').lower()
+    def __event_time(date: datetime, now: Optional[datetime] = None) -> str:
+        return "<b>RIGHT NOW</b>" if (now and date < now) else date.strftime('%I:%M%p').lstrip('0').replace(':00', '').lower()
 
     @staticmethod
     def __enumerate(lst: list[str]) -> str:
