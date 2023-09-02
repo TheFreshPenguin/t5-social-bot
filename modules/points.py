@@ -1,10 +1,11 @@
 import logging
 import random
 
-from telegram import Update
+from telegram import Update, InlineKeyboardButton
 from telegram.constants import ChatType
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
+from modules.base_module import BaseModule
 from helpers.access_checker import AccessChecker
 from helpers.exceptions import UserFriendlyError
 from helpers.points import Points
@@ -22,30 +23,56 @@ with open("resources/points_balance_sarcasm.txt", "r") as file:
     balance_sarcastic_comments = [line.rstrip('\n') for line in file.readlines()]
 
 
-class PointsModule:
+class PointsModule(BaseModule):
     def __init__(self, loy: LoyverseApi, ac: AccessChecker):
         self.loy = loy
         self.ac = ac
 
     def install(self, application: Application) -> None:
-        application.add_handler(CommandHandler("balance", self.__balance))
-        application.add_handler(CommandHandler("donate", self.__donate))
+        application.add_handlers([
+            CommandHandler("balance", self.__balance),
+            CommandHandler("donate", self.__donate),
+
+            CallbackQueryHandler(self.__balance, pattern="^points/balance$"),
+            CallbackQueryHandler(self.__donate_help, pattern="^points/donate_help"),
+        ])
         logger.info("Points module installed")
+
+    def get_menu_buttons(self) -> list[list[InlineKeyboardButton]]:
+        return [
+            [InlineKeyboardButton('Check Your Points', callback_data='points/balance')],
+            [InlineKeyboardButton('Donate Points', callback_data='points/donate_help')],
+        ]
 
     async def __balance(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         try:
-            user = update.message.from_user.username
+            user = update.effective_user.username
             if not user:
                 raise UserFriendlyError("I don't really know who you are - to check your balance you first need to create a username in Telegram.")
 
             balance = self.loy.get_balance(user).to_integral()
             sarc = random.choice(balance_sarcastic_comments)
-            await update.message.reply_text(f"{sarc} @{user}, you have {balance} T5 Loyalty Points!")
+            reply = f"{sarc} @{user}, you have {balance} T5 Loyalty Points!"
         except UserFriendlyError as e:
-            await update.message.reply_text(str(e))
+            reply = str(e)
         except Exception as e:
             logger.exception(e)
-            await update.message.reply_text(f"BeeDeeBeeBoop 🤖 Error : {e}")
+            reply = f"BeeDeeBeeBoop 🤖 Error : {e}"
+
+        if update.effective_chat.type != ChatType.PRIVATE:
+            reply += "\n\n" + 'You can also <a href="https://t.me/T5socialBot?start=help">talk to me directly</a> to check your points!'
+
+        if update.callback_query:
+            await update.callback_query.answer()
+            await update.callback_query.edit_message_text(reply)
+        else:
+            await update.message.reply_html(reply)
+
+    async def __donate_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        await update.callback_query.answer()
+        await update.callback_query.edit_message_text(
+            "To use this command you need to write it like this: /donate telegram_username number_of_points"
+        )
 
     async def __donate(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         # Get the arguments passed with the command
@@ -55,7 +82,7 @@ class PointsModule:
             if len(args) < 2:
                 raise UserFriendlyError("To use this command you need to write it like this: /donate telegram_username number_of_points")
 
-            sender = update.message.from_user.username
+            sender = update.effective_user.username
             if not sender:
                 raise UserFriendlyError("I don't really know who you are - to donate or receive points you first need to create a username in Telegram.")
 

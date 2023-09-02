@@ -1,18 +1,19 @@
 #-- welcome --#
 
-BeeDeeBeeBoop 🤖
+I am the T5 Social Telegram bot\!
 
-I'm T5 Social's Telegram bot\.
+Did you know that every time you visit T5, 10% of your spend is converted into *Loyalty Points*\. These can be redeemed on future visits, or even gifted to others\!
 
-How does this work?
+I can also let you know about upcoming *Social Events* in the community\.
 
-*Check your Loyalty Points*
-
-/balance
-
-*Donate to another member*
-
-/donate \{username\} \{points\}
-e\.g\. `/donate @barbitcheps 33\.3`
+How may I help you today\?
 
 Made with ❤️ by [Antoine](tg://user?id=1698340339)
+
+#-- welcome_general --#
+
+BeeDeeBeeBoop 🤖
+
+I'm T5 Social's Telegram bot\!
+
+[Talk to me directly](https://t.me/T5socialBot?start=help) to learn how I can be of help\!
