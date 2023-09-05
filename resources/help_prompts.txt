@@ -2,11 +2,13 @@
 
 I am the T5 Social Telegram bot\!
 
-Did you know that every time you visit T5, 10% of your spend is converted into *Loyalty Points*\. These can be redeemed on future visits, or even gifted to others\!
+Did you know that every time you visit T5, 10% of your spend is converted into *Loyalty Points*\? These can be redeemed on future visits, or even gifted to others\!
 
-I can also let you know about upcoming *Social Events* in the community\.
+You can use me to check your points balance or donate points to a friend\.
 
-How may I help you today\?
+I can also inform you about upcoming *Social Events* in the community\.
+
+How can I assist you today\?
 
 Made with ❤️ by [Antoine](tg://user?id=1698340339)
 
@@ -14,6 +16,6 @@ Made with ❤️ by [Antoine](tg://user?id=1698340339)
 
 BeeDeeBeeBoop 🤖
 
-I'm T5 Social's Telegram bot\!
+I am the T5 Social Telegram bot\!
 
 [Talk to me directly](https://t.me/T5socialBot?start=help) to learn how I can be of help\!
