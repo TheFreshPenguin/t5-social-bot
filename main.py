@@ -9,7 +9,8 @@ from helpers.access_checker import AccessChecker
 from helpers.points import Points
 
 from integrations.loyverse.api import LoyverseApi
-from integrations.google.sheet_repository import GoogleSheetRepository
+from integrations.google.sheet_database import GoogleSheetDatabase
+from integrations.google.sheet_event_repository import GoogleSheetEventRepository
 
 from modules.help import HelpModule
 from modules.points import PointsModule
@@ -41,11 +42,12 @@ def main() -> None:
     config = MainConfig()
     logging.basicConfig(level=config.log_level, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-    repository = GoogleSheetRepository(
+    database = GoogleSheetDatabase(
         spreadsheet_key=config.google_spreadsheet_key,
         api_credentials=config.google_api_credentials,
-        timezone=config.timezone
     )
+
+    event_repository = GoogleSheetEventRepository(database, config.timezone)
 
     loy = LoyverseApi(config.loyverse_token, read_only=config.loyverse_read_only)
     ac = AccessChecker(
@@ -63,7 +65,7 @@ def main() -> None:
             points_to_award=config.birthday_points,
             timezone=config.timezone,
         ),
-        EventsModule(repository=repository, timezone=config.timezone, ac=ac),
+        EventsModule(repository=event_repository, timezone=config.timezone, ac=ac),
     ]
 
     # The help module must be last because it catches all chat, and it picks up menu buttons from the other modules
@@ -74,7 +76,7 @@ def main() -> None:
     for module in modules:
         module.install(application)
 
-    application.job_queue.run_repeating(callback=repository.refresh_job, interval=60 * 5)  # Refresh every 5 minutes
+    application.job_queue.run_repeating(callback=database.refresh_job, interval=60 * 5)  # Refresh every 5 minutes
 
     # Start the Bot
     logger.info('start_polling')

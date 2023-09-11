@@ -10,14 +10,14 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 from modules.base_module import BaseModule
 from helpers.access_checker import AccessChecker
 from helpers.exceptions import UserFriendlyError
-from data.repository import DataRepository
+from data.repositories.event import EventRepository
 from data.models.event import Event
 
 logger = logging.getLogger(__name__)
 
 
 class EventsModule(BaseModule):
-    def __init__(self, ac: AccessChecker, repository: DataRepository, timezone: pytz.timezone = None, upcoming_days: int = 6):
+    def __init__(self, ac: AccessChecker, repository: EventRepository, timezone: pytz.timezone = None, upcoming_days: int = 6):
         self.ac = ac
         self.repository = repository
         self.timezone = timezone
@@ -43,11 +43,9 @@ class EventsModule(BaseModule):
             return
 
         try:
-            all_events = self.repository.get_events()
             now = datetime.now(self.timezone)
-
-            today_text = self.__format_today(all_events, now)
-            upcoming_text = self.__format_upcoming(all_events, now, self.upcoming_days)
+            today_text = self.__format_today(now)
+            upcoming_text = self.__format_upcoming(now, self.upcoming_days)
             reply = self.__merge_texts(today_text, upcoming_text)
         except UserFriendlyError as e:
             reply = str(e)
@@ -72,16 +70,15 @@ class EventsModule(BaseModule):
         else:
             return "Sadly, Mici has eaten all our hosts so there are no events happening any time soon."
 
-    @staticmethod
-    def __format_today(all_events: dict[str, list[Event]], now: datetime) -> str:
-        events = all_events.get(now.strftime('%Y-%m-%d'), [])
+    def __format_today(self, now: datetime) -> str:
+        events = self.repository.get_events_on(now)
         events = [e for e in events if e.end_date > now]
 
         if not events:
             return ""
 
         main_event = events[-1]
-        main_text = EventsModule.__main_event(events[-1], now)
+        main_text = EventsModule.__main_event(main_event, now)
         today_text = f"<b>Tonight's Event:</b>\n\n{main_text}"
 
         if len(events) > 1:
@@ -91,11 +88,10 @@ class EventsModule(BaseModule):
 
         return today_text
 
-    @staticmethod
-    def __format_upcoming(all_events: dict[str, list[Event]], now: datetime, upcoming_days: int) -> str:
+    def __format_upcoming(self, now: datetime, upcoming_days: int) -> str:
         upcoming_texts = []
         for date in (now + timedelta(n + 1) for n in range(upcoming_days)):
-            date_events = all_events.get(date.strftime('%Y-%m-%d'), [])
+            date_events = self.repository.get_events_on(date)
             if not date_events:
                 continue
 
