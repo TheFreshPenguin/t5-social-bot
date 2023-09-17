@@ -6,6 +6,8 @@ from typing import Dict
 import helpers.json
 from helpers.points import Points
 
+from data.models.user import User
+
 from integrations.loyverse.customer import Customer
 from integrations.loyverse.exceptions import InsufficientFundsError
 
@@ -21,28 +23,28 @@ class LoyverseApi:
         self.token = token
         self.read_only = read_only
 
-    def get_balance(self, username: str) -> Points:
-        return self.__get_customer(username).points
+    def get_balance(self, user: User) -> Points:
+        return self.__get_customer(user).points
 
-    def add_points(self, username: str, points: Points) -> None:
-        customer = self.__get_customer(username)
+    def add_points(self, user: User, points: Points) -> None:
+        customer = self.__get_customer(user)
         customer.points += points
         self.__save_customer(customer)
 
-    def remove_points(self, username, points: Points) -> None:
-        customer = self.__get_customer(username)
+    def remove_points(self, user: User, points: Points) -> None:
+        customer = self.__get_customer(user)
         if customer.points < points:
             raise InsufficientFundsError("You don't have enough points")
 
         customer.points -= points
         self.__save_customer(customer)
 
-    def __get_customer(self, username: str) -> Customer:
+    def __get_customer(self, user: User) -> Customer:
         customers = self.__get_all_customers()
-        customer = customers.get(username)
+        customer = customers.get(user.telegram_username)
 
         if not customer:
-            raise Exception(f"@{username} is not a recognised user, try again!")
+            raise Exception(f"@{user.telegram_username} is not a recognised user, try again!")
 
         return customer
 

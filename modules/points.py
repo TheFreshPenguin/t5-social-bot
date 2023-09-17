@@ -5,6 +5,8 @@ from telegram import Update, InlineKeyboardButton
 from telegram.constants import ChatType
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
+from data.repositories.user import UserRepository
+
 from modules.base_module import BaseModule
 from helpers.access_checker import AccessChecker
 from helpers.exceptions import UserFriendlyError
@@ -24,9 +26,10 @@ with open("resources/points_balance_sarcasm.txt", "r") as file:
 
 
 class PointsModule(BaseModule):
-    def __init__(self, loy: LoyverseApi, ac: AccessChecker):
+    def __init__(self, loy: LoyverseApi, ac: AccessChecker, users: UserRepository):
         self.loy = loy
         self.ac = ac
+        self.users = users
 
     def install(self, application: Application) -> None:
         application.add_handlers([
@@ -46,13 +49,17 @@ class PointsModule(BaseModule):
 
     async def __balance(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         try:
-            user = update.effective_user.username
-            if not user:
+            user_name = update.effective_user.username
+            if not user_name:
                 raise UserFriendlyError("I don't really know who you are - to check your balance you first need to create a username in Telegram.")
+
+            user = self.users.get_by_telegram_name(user_name)
+            if not user:
+                raise UserFriendlyError("Sorry, but this feature is for Community Champions only.")
 
             balance = self.loy.get_balance(user).to_integral()
             sarc = random.choice(balance_sarcastic_comments)
-            reply = f"{sarc} @{user}, you have {balance} T5 Loyalty Points!"
+            reply = f"{sarc} @{user.telegram_username}, you have {balance} T5 Loyalty Points!"
         except UserFriendlyError as e:
             reply = str(e)
         except Exception as e:
@@ -82,11 +89,19 @@ class PointsModule(BaseModule):
             if len(args) < 2:
                 raise UserFriendlyError("To use this command you need to write it like this: /donate telegram_username number_of_points")
 
-            sender = update.effective_user.username
-            if not sender:
+            sender_name = update.effective_user.username
+            if not sender_name:
                 raise UserFriendlyError("I don't really know who you are - to donate or receive points you first need to create a username in Telegram.")
 
-            recipient = args[0].lstrip('@')
+            sender = self.users.get_by_telegram_name(sender_name)
+            if not sender:
+                raise UserFriendlyError("Sorry, but the donate feature is for Community Champions only.")
+
+            recipient_name = args[0].lstrip('@')
+            recipient = self.users.get_by_telegram_name(recipient_name)
+            if not recipient:
+                raise UserFriendlyError("I don't know this strange person that you are trying to donate to - is this one of our Community Champions?")
+
             if sender == recipient:
                 raise UserFriendlyError("Donating to yourself is like high-fiving in a mirror – impressive to you, but not making the world a better place!")
 

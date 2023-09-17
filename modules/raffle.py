@@ -4,6 +4,8 @@ from collections import Counter
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes, filters
 
+from data.repositories.user import UserRepository
+
 from modules.base_module import BaseModule
 from helpers.access_checker import AccessChecker
 from helpers.exceptions import UserFriendlyError
@@ -16,10 +18,11 @@ logger = logging.getLogger(__name__)
 
 
 class RaffleModule(BaseModule):
-    def __init__(self, loy: LoyverseApi, ac: AccessChecker):
+    def __init__(self, loy: LoyverseApi, ac: AccessChecker, users: UserRepository):
         self.loy = loy
         self.ac = ac
         self.entries = []
+        self.users = users
 
     def install(self, application: Application) -> None:
         application.add_handler(CommandHandler("raffle", self.__raffle, filters.ChatType.PRIVATE))
@@ -27,20 +30,24 @@ class RaffleModule(BaseModule):
         logger.info(f"Raffle module installed")
 
     async def __raffle(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        user = update.effective_user.username
+        user_name = update.effective_user.username
 
         try:
-            if not user:
+            if not user_name:
                 raise UserFriendlyError('You first need to choose a username in Telegram')
+
+            user = self.users.get_by_telegram_name(user_name)
+            if not user:
+                raise UserFriendlyError("Sorry, but the raffle is for Community Champions only.")
 
             try:
                 self.loy.remove_points(user, Points(5))
             except InsufficientFundsError as e:
-                raise UserFriendlyError(f"Oh no @{user}! You don't have enough points for the Community Raffle. Buy some drinks from the bar or beg a friend for a donation!") from e
+                raise UserFriendlyError(f"Oh no @{user.telegram_username}! You don't have enough points for the Community Raffle. Buy some drinks from the bar or beg a friend for a donation!") from e
 
-            self.entries.append(user)
+            self.entries.append(user.telegram_username)
             entry_count = Counter(self.entries)
-            reply = f"Congrats @{user}. You just bought a ticket for the Community Raffle. Thanks for supporting and good luck!\n\n"
+            reply = f"Congrats @{user.telegram_username}. You just bought a ticket for the Community Raffle. Thanks for supporting and good luck!\n\n"
 
             # Display the list of entries with entry counts
             for entry, count in entry_count.items():

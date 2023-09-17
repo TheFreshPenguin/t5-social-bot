@@ -58,8 +58,8 @@ def main() -> None:
     )
 
     modules = [
-        PointsModule(loy=loy, ac=ac),
-        RaffleModule(loy=loy, ac=ac),
+        PointsModule(loy=loy, ac=ac, users=user_repository),
+        RaffleModule(loy=loy, ac=ac, users=user_repository),
         BirthdayModule(
             loy=loy,
             ac=ac,

@@ -82,7 +82,7 @@ class BirthdayModule(BaseModule):
 
     def __add_points(self, users: list[User]) -> None:
         for user in users:
-            self.loy.add_points(user.telegram_username, self.points_to_award)
+            self.loy.add_points(user, self.points_to_award)
 
     async def __announce_birthdays(self, users: list[User], context: ContextTypes.DEFAULT_TYPE) -> None:
         if not self.chats:
