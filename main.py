@@ -11,6 +11,7 @@ from helpers.points import Points
 from integrations.loyverse.api import LoyverseApi
 from integrations.google.sheet_database import GoogleSheetDatabase
 from integrations.google.sheet_event_repository import GoogleSheetEventRepository
+from integrations.google.sheet_user_repository import GoogleSheetUserRepository
 
 from modules.help import HelpModule
 from modules.points import PointsModule
@@ -48,6 +49,7 @@ def main() -> None:
     )
 
     event_repository = GoogleSheetEventRepository(database, config.timezone)
+    user_repository = GoogleSheetUserRepository(database)
 
     loy = LoyverseApi(config.loyverse_token, read_only=config.loyverse_read_only)
     ac = AccessChecker(
@@ -61,6 +63,7 @@ def main() -> None:
         BirthdayModule(
             loy=loy,
             ac=ac,
+            users=user_repository,
             default_chats=config.birthday_chats,
             points_to_award=config.birthday_points,
             timezone=config.timezone,

@@ -17,12 +17,17 @@ class GoogleSheetDatabase:
 
         self._spreadsheet = Subject()
         self._events = self._sheet_data('Events')
+        self._users = self._sheet_data('Community')
 
         self.refresh()
 
     @property
     def events(self) -> Observable:
         return self._events
+
+    @property
+    def users(self) -> Observable:
+        return self._users
 
     def refresh(self) -> None:
         logger.info('Refreshing Google Sheets data')
