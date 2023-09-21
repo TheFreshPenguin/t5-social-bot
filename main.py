@@ -31,7 +31,7 @@ class MainConfig:
         self.telegram_token = os.getenv('telegram_token')
         self.loyverse_token = os.getenv('loyverse_token')
         self.loyverse_read_only = bool(int(os.getenv('loyverse_read_only', 0)))
-        self.birthday_chats = set([int(chatid) for chatid in os.getenv('birthday_chats', '').split(',') if chatid])
+        self.announcement_chats = set([int(chatid) for chatid in os.getenv('announcement_chats', '').split(',') if chatid])
         self.birthday_points = Points(os.getenv('birthday_points', 5))
         self.timezone = pytz.timezone(os.getenv('timezone', 'Europe/Bucharest'))
         self.masters = set([username for username in os.getenv('masters', '').split(',') if username])
@@ -60,13 +60,13 @@ def main() -> None:
 
     modules = [
         PointsModule(loy=loy, users=user_repository),
-        DonateModule(loy=loy, ac=ac, users=user_repository, announcement_chats=config.birthday_chats),
+        DonateModule(loy=loy, ac=ac, users=user_repository, announcement_chats=config.announcement_chats),
         RaffleModule(loy=loy, ac=ac, users=user_repository),
         BirthdayModule(
             loy=loy,
             ac=ac,
             users=user_repository,
-            default_chats=config.birthday_chats,
+            default_chats=config.announcement_chats,
             points_to_award=config.birthday_points,
             timezone=config.timezone,
         ),
