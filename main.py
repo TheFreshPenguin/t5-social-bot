@@ -15,6 +15,7 @@ from integrations.google.sheet_user_repository import GoogleSheetUserRepository
 
 from modules.help import HelpModule
 from modules.points import PointsModule
+from modules.donate import DonateModule
 from modules.raffle import RaffleModule
 from modules.birthday import BirthdayModule
 from modules.events import EventsModule
@@ -58,7 +59,8 @@ def main() -> None:
     )
 
     modules = [
-        PointsModule(loy=loy, ac=ac, users=user_repository),
+        PointsModule(loy=loy, users=user_repository),
+        DonateModule(loy=loy, ac=ac, users=user_repository, announcement_chats=config.birthday_chats),
         RaffleModule(loy=loy, ac=ac, users=user_repository),
         BirthdayModule(
             loy=loy,
