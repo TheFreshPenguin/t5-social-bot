@@ -25,29 +25,33 @@ class GoogleSheetUserRepository(UserRepository):
         database.users.subscribe(self.__load)
 
     def get_by_telegram_id(self, telegram_id: int) -> Optional[User]:
-        return self.users_by_telegram_id.get(telegram_id)
+        with self.lock.gen_rlock():
+            return self.users_by_telegram_id.get(telegram_id)
 
     def get_by_telegram_name(self, telegram_name: str) -> Optional[User]:
-        return self.users_by_telegram_name.get(telegram_name)
+        with self.lock.gen_rlock():
+            return self.users_by_telegram_name.get(telegram_name)
 
     def get_by_birthday(self, birthday: Union[str, date, datetime]) -> list[User]:
-        date_string = birthday if isinstance(birthday, str) else birthday.strftime('%m-%d')
-        return self.users_by_birthday.get(date_string, [])
+        with self.lock.gen_rlock():
+            date_string = birthday if isinstance(birthday, str) else birthday.strftime('%m-%d')
+            return self.users_by_birthday.get(date_string, [])
 
     def search(self, query: str) -> set[User]:
-        query = query.lower()
+        with self.lock.gen_rlock():
+            query = query.lower()
 
-        # A direct match is a successful prefix search; this is usually what we want
-        if query in self.users_search:
-            return self.users_search[query]
+            # A direct match is a successful prefix search; this is usually what we want
+            if query in self.users_search:
+                return self.users_search[query]
 
-        # No direct matches -> do a full search
-        results = set()
-        for key, users in self.users_search.items():
-            if query in key:
-                results |= users
+            # No direct matches -> do a full search
+            results = set()
+            for key, users in self.users_search.items():
+                if query in key:
+                    results |= users
 
-        return results
+            return results
 
     def save(self, user: User) -> None:
         # Upcoming - will be used to keep track of who talked to the bot
