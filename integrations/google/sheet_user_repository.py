@@ -16,6 +16,7 @@ class GoogleSheetUserRepository(UserRepository):
         self.users_by_telegram_id = {}
         self.users_by_telegram_name = {}
         self.users_by_birthday = {}
+        self.users_search = {}
 
         # The repository data can be read and refreshed from different threads,
         # so any data operation needs to be protected
@@ -34,8 +35,19 @@ class GoogleSheetUserRepository(UserRepository):
         return self.users_by_birthday.get(date_string, [])
 
     def search(self, query: str) -> set[User]:
-        # Upcoming - will be used to help with finding the right person to donate to
-        pass
+        query = query.lower()
+
+        # A direct match is a successful prefix search; this is usually what we want
+        if query in self.users_search:
+            return self.users_search[query]
+
+        # No direct matches -> do a full search
+        results = set()
+        for key, users in self.users_search.items():
+            if query in key:
+                results |= users
+
+        return results
 
     def save(self, user: User) -> None:
         # Upcoming - will be used to keep track of who talked to the bot
@@ -58,6 +70,45 @@ class GoogleSheetUserRepository(UserRepository):
             users_with_birthday = [user for user in self.users if user.birthday]
             sorted_birthdays = sorted(users_with_birthday, key=lambda user: user.birthday)
             self.users_by_birthday = {key: list(group) for key, group in groupby(sorted_birthdays, key=lambda user: user.birthday)}
+
+            self.users_search = {}
+            # Complete telegram username
+            self.__add_to_search({user.telegram_username.lower(): user for user in self.users})
+            for user in self.users:
+                # Complete alias list
+                self.__add_to_search({alias.lower(): user for alias in user.aliases})
+                # First name from full name
+                self.__add_to_search({user.first_name.lower(): user})
+            # Complete full name
+            self.__add_to_search({user.full_name.lower(): user for user in self.users if user.full_name})
+
+            self.__merge_search_prefixes()
+
+    # E.g. The entry for Alex will match Alex Uzan, Alexandru Ivanciu, and Alexandra Tudor
+    # Without this, it would only match Alex Uzan
+    def __merge_search_prefixes(self) -> None:
+        sorted_keys = list(self.users_search.keys())
+        sorted_keys.sort()
+
+        prefix_i = 0
+        current_i = 1
+
+        while current_i < len(sorted_keys):
+            prefix = sorted_keys[prefix_i]
+            key = sorted_keys[current_i]
+            if key.startswith(prefix):
+                self.users_search[prefix] |= self.users_search[sorted_keys[current_i]]
+                current_i = current_i + 1
+            else:
+                prefix_i = prefix_i + 1
+                current_i = prefix_i + 1
+
+    def __add_to_search(self, entries: dict[str, User]) -> None:
+        for key, user in entries.items():
+            if key in self.users_search:
+                self.users_search[key].add(user)
+            else:
+                self.users_search[key] = {user}
 
     @staticmethod
     def __parse_int(int_string: str) -> Optional[int]:
