@@ -52,7 +52,7 @@ def main() -> None:
     event_repository = GoogleSheetEventRepository(database, config.timezone)
     user_repository = GoogleSheetUserRepository(database)
 
-    loy = LoyverseApi(config.loyverse_token, read_only=config.loyverse_read_only)
+    loy = LoyverseApi(config.loyverse_token, users=user_repository, read_only=config.loyverse_read_only)
     ac = AccessChecker(
         masters=config.masters,
         point_masters=config.point_masters,
