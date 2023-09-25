@@ -19,3 +19,6 @@ class UserRepository:
 
     def save(self, user: User) -> None:
         pass
+
+    def save_all(self, users: list[User]) -> None:
+        pass

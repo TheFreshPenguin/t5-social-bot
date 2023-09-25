@@ -1,13 +1,14 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace, field
+from copy import deepcopy
 from typing import Optional
 
 
-@dataclass
+@dataclass(frozen=True)
 class User:
     full_name: str
-    aliases: list[str]
+    aliases: list[str] = field(default_factory=list)
     telegram_username: str = ''
-    birthday: str = ''
+    birthday: Optional[str] = None
     telegram_id: Optional[int] = None
     loyverse_id: Optional[str] = None
 
@@ -24,3 +25,7 @@ class User:
 
     def __hash__(self):
         return hash(self.full_name)
+
+    def copy(self, **changes) -> 'User':
+        return replace(deepcopy(self), **changes)
+
