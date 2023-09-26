@@ -1,4 +1,5 @@
 from dataclasses import dataclass, replace, field
+from datetime import datetime
 from copy import deepcopy
 from typing import Optional
 
@@ -11,6 +12,7 @@ class User:
     birthday: Optional[str] = None
     telegram_id: Optional[int] = None
     loyverse_id: Optional[str] = None
+    last_private_chat: Optional[datetime] = None
 
     @property
     def first_name(self) -> str:

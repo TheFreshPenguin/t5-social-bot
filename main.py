@@ -19,6 +19,7 @@ from modules.donate import DonateModule
 from modules.raffle import RaffleModule
 from modules.birthday import BirthdayModule
 from modules.events import EventsModule
+from modules.tracking import TrackingModule
 
 load_dotenv()
 
@@ -50,7 +51,7 @@ def main() -> None:
     )
 
     event_repository = GoogleSheetEventRepository(database, config.timezone)
-    user_repository = GoogleSheetUserRepository(database)
+    user_repository = GoogleSheetUserRepository(database, config.timezone)
 
     loy = LoyverseApi(config.loyverse_token, users=user_repository, read_only=config.loyverse_read_only)
     ac = AccessChecker(
@@ -71,6 +72,7 @@ def main() -> None:
             timezone=config.timezone,
         ),
         EventsModule(repository=event_repository, timezone=config.timezone, ac=ac),
+        TrackingModule(users=user_repository),
     ]
 
     # The help module must be last because it catches all chat, and it picks up menu buttons from the other modules

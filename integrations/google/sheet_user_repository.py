@@ -1,3 +1,5 @@
+import pytz
+
 from typing import Optional, Union
 from itertools import groupby
 from datetime import date, datetime
@@ -14,7 +16,9 @@ UserHandle = Handle[User]
 
 
 class GoogleSheetUserRepository(UserRepository):
-    def __init__(self, database: GoogleSheetDatabase):
+    def __init__(self, database: GoogleSheetDatabase, timezone: pytz.timezone = None):
+        self.timezone = timezone
+
         self.users: list[UserHandle] = []
         self.users_by_full_name: dict[str, UserHandle] = {}
         self.users_by_telegram_id: dict[int, UserHandle] = {}
@@ -86,7 +90,7 @@ class GoogleSheetUserRepository(UserRepository):
 
     def _load(self, raw_data: list[dict[str, str]]) -> None:
         with self.lock.gen_wlock():
-            self.users = [UserHandle(GoogleSheetUserRepository._from_row(row)) for row in raw_data]
+            self.users = [UserHandle(self._from_row(row)) for row in raw_data]
 
             self.users_by_full_name = {handle.inner.full_name: handle for handle in self.users if handle.inner.full_name}
             self.users_by_telegram_id = {handle.inner.telegram_id: handle for handle in self.users if handle.inner.telegram_id}
@@ -135,8 +139,7 @@ class GoogleSheetUserRepository(UserRepository):
             else:
                 self.users_search[key] = {user}
 
-    @staticmethod
-    def _from_row(row: dict[str, str]) -> User:
+    def _from_row(self, row: dict[str, str]) -> User:
         return User(
             full_name=row.get('full_name', '').strip(),
             aliases=GoogleSheetUserRepository._parse_aliases(row.get('aliases', '')),
@@ -144,6 +147,7 @@ class GoogleSheetUserRepository(UserRepository):
             birthday=row.get('birthday', ''),
             telegram_id=GoogleSheetUserRepository._parse_int(row.get('telegram_id', '')),
             loyverse_id=row.get('loyverse_id', '').strip(),
+            last_private_chat=self._parse_datetime(row.get('last_private_chat', '').strip())
         )
 
     @staticmethod
@@ -155,6 +159,7 @@ class GoogleSheetUserRepository(UserRepository):
             'birthday': user.birthday,
             'telegram_id': user.telegram_id,
             'loyverse_id': user.loyverse_id,
+            'last_private_chat': user.last_private_chat.strftime('%Y-%m-%d %H:%M:%S') if user.last_private_chat else None
         }
 
     @staticmethod
@@ -162,6 +167,12 @@ class GoogleSheetUserRepository(UserRepository):
         a_row = GoogleSheetUserRepository._to_row(a)
         b_row = GoogleSheetUserRepository._to_row(b)
         return {k: v for k, v in b_row.items() if a_row[k] != b_row[k]}
+
+    def _parse_datetime(self, datetime_string: str) -> Optional[datetime]:
+        try:
+            return self.timezone.localize(datetime.strptime(datetime_string, '%Y-%m-%d %H:%M:%S'))
+        except ValueError:
+            return None
 
     @staticmethod
     def _parse_int(int_string: str) -> Optional[int]:
