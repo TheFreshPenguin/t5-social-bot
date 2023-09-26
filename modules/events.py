@@ -112,7 +112,7 @@ class EventsModule(BaseModule):
 
     @staticmethod
     def __upcoming_event(e: Event, now: Optional[datetime] = None) -> str:
-        return f"{e.name} | {EventsModule.__event_time(e.start_date, now)} | " + (e.host if e.host else "")
+        return f"{e.name} | {EventsModule.__event_time(e.start_date, now)}" + (f" | {e.host}" if e.host else "")
 
     @staticmethod
     def __event_time(date: datetime, now: Optional[datetime] = None) -> str:
