@@ -1,12 +1,20 @@
+from dataclasses import dataclass, replace, field
 from datetime import datetime, timedelta
-from typing import Optional
+from copy import deepcopy
 
 
+@dataclass(frozen=True)
 class Event:
-    def __init__(self, name: str, start_date: datetime, end_date: Optional[datetime] = None, host: str = '', description: str = ''):
-        self.start_date = start_date
-        # Assume a default duration of 1 hour for events
-        self.end_date = end_date if end_date else (start_date + timedelta(hours=1))
-        self.name = name
-        self.host = host
-        self.description = description
+    name: str
+    start_date: datetime
+    end_date: datetime = field(default=None)
+    host: str = ''
+    description: str = ''
+
+    def __post_init__(self):
+        if not self.end_date:
+            # Workaround to initialize a field in a frozen class
+            super().__setattr__('end_date', self.start_date + timedelta(hours=1))
+
+    def copy(self, **changes) -> 'Event':
+        return replace(deepcopy(self), **changes)
