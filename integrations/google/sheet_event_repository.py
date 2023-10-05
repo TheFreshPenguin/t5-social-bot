@@ -52,10 +52,11 @@ class GoogleSheetEventRepository(EventRepository):
     def _from_row(self, row: dict[str, str]) -> Event:
         return Event(
             name=row.get('event', '').strip(),
-            start_date=self.__parse_datetime(row.get('date', '').strip() + ' ' + row.get('time', '').strip()),
+            start_date=self.__parse_datetime(row.get('date', '').strip(), row.get('time', '').strip()),
             host=row.get('host', '').strip(),
             description=row.get('description', '').strip(),
         )
 
-    def __parse_datetime(self, datestr: str) -> datetime:
-        return self.timezone.localize(datetime.strptime(datestr, '%Y-%m-%d %H:%M'))
+    def __parse_datetime(self, date_string: str, time_string: str) -> datetime:
+        full_string = date_string + ' ' + (time_string or '19:00')
+        return self.timezone.localize(datetime.strptime(full_string, '%Y-%m-%d %H:%M'))
