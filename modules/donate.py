@@ -14,7 +14,7 @@ from helpers.exceptions import UserFriendlyError, CommandSyntaxError
 from helpers.points import Points
 
 from integrations.loyverse.api import LoyverseApi
-from integrations.loyverse.exceptions import InsufficientFundsError
+from integrations.loyverse.exceptions import InsufficientFundsError, InvalidCustomerError
 
 logger = logging.getLogger(__name__)
 
@@ -216,13 +216,20 @@ class DonateModule(BaseModule):
         return recipient
 
     def _execute_donation(self, sender: User, recipient: User, points: Points) -> None:
-        try:
-            if not self.ac.can_donate_for_free(sender):
+        if not self.ac.can_donate_for_free(sender):
+            try:
                 self.loy.remove_points(sender, points)
+            except InvalidCustomerError as error:
+                raise UserFriendlyError(f"You do not have a bar tab as a Community Champion. You should ask Rob to make one for you.") from error
+            except InsufficientFundsError as error:
+                raise UserFriendlyError("Your generosity is the stuff of legends, but you cannot donate more points than you have in your balance.") from error
+            except Exception as error:
+                raise UserFriendlyError("The donation has failed - perhaps the stars were not right? You can try again later.") from error
 
+        try:
             self.loy.add_points(recipient, points)
-        except InsufficientFundsError as error:
-            raise UserFriendlyError("Your generosity is the stuff of legends, but you cannot donate more points than you have in your balance.") from error
+        except InvalidCustomerError as error:
+            raise UserFriendlyError(f"{DonateModule._message_name(recipient)} does not have a bar tab as a Community Champion. You should ask Rob to make one for them.") from error
         except Exception as error:
             raise UserFriendlyError("The donation has failed - perhaps the stars were not right? You can try again later.") from error
 

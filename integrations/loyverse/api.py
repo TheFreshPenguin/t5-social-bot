@@ -10,7 +10,7 @@ from data.models.user import User
 from data.repositories.user import UserRepository
 
 from integrations.loyverse.customer import Customer
-from integrations.loyverse.exceptions import InsufficientFundsError
+from integrations.loyverse.exceptions import InsufficientFundsError, InvalidCustomerError
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class LoyverseApi:
             customer = self._initialize_customer(user)
 
         if not customer:
-            raise Exception(f"@{user.telegram_username} is not a recognised user, try again!")
+            raise InvalidCustomerError(f"The user @{user.telegram_username} is not a recognized Loyverse customer.")
 
         return customer
 
