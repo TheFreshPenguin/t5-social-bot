@@ -154,11 +154,11 @@ class DonateModule(BaseModule):
             await update.callback_query.answer()
             await update.callback_query.edit_message_text(messages['sender'])
 
-            for chat_id in self.announcement_chats:
-                await context.bot.send_message(chat_id, messages['announcement'])
-
             if recipient.telegram_id:
                 await context.bot.send_message(recipient.telegram_id, messages['recipient'])
+            else:
+                for chat_id in self.announcement_chats:
+                    await context.bot.send_message(chat_id, messages['announcement'])
         except UserFriendlyError as e:
             await update.callback_query.answer()
             await update.callback_query.edit_message_text(str(e))
