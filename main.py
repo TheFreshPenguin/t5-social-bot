@@ -16,6 +16,7 @@ from integrations.google.sheet_user_repository import GoogleSheetUserRepository
 from modules.help import HelpModule
 from modules.points import PointsModule
 from modules.donate import DonateModule
+from modules.xmas import XmasModule
 from modules.raffle import RaffleModule
 from modules.birthday import BirthdayModule
 from modules.events import EventsModule
@@ -39,6 +40,7 @@ class MainConfig:
         self.point_masters = set([username for username in os.getenv('point_masters', '').split(',') if username])
         self.google_api_credentials = os.getenv('google_api_credentials')
         self.google_spreadsheet_key = os.getenv('google_spreadsheet_key')
+        self.xmas_loyverse_id = os.getenv('xmas_loyverse_id')
 
 
 def main() -> None:
@@ -72,6 +74,7 @@ def main() -> None:
             timezone=config.timezone,
         ),
         EventsModule(repository=event_repository, timezone=config.timezone, ac=ac),
+        XmasModule(loy=loy, ac=ac, users=user_repository, xmas_loyverse_id=config.xmas_loyverse_id),
         TrackingModule(users=user_repository),
     ]
 
