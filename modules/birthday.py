@@ -1,12 +1,13 @@
 import logging
 import pytz
 from datetime import datetime, time
-from itertools import groupby
-import csv
 import random
 
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes, filters
+
+from data.models.user import User
+from data.repositories.user import UserRepository
 
 from modules.base_module import BaseModule
 from helpers.access_checker import AccessChecker
@@ -23,24 +24,11 @@ with open("resources/birthday_messages.txt", "r") as file:
     birthday_messages = [line.rstrip('\n') for line in file.readlines()]
 
 
-# The keys are birthdays, the values are lists of users without @
-birthdays = {}
-
-# Open the CSV file
-with open('resources/T5 Community Data_Birthdays.csv', 'r') as csvfile:
-    # Create a CSV reader object
-    reader = csv.DictReader(csvfile)
-
-    birthday_data = [(f"{row['Month']}/{row['Day']}", row['Username']) for row in reader]
-    sorted_birthdays = sorted(birthday_data, key=lambda row: row[0])
-    for date, grouped_users in groupby(sorted_birthdays, key=lambda row: row[0]):
-        birthdays[date] = [user[1] for user in grouped_users]
-
-
 class BirthdayModule(BaseModule):
-    def __init__(self, loy: LoyverseApi, ac: AccessChecker, default_chats: set = None, points_to_award: Points = Points(5), timezone: pytz.timezone = None):
+    def __init__(self, loy: LoyverseApi, ac: AccessChecker, users: UserRepository, default_chats: set = None, points_to_award: Points = Points(5), timezone: pytz.timezone = None):
         self.loy = loy
         self.ac = ac
+        self.users = users
         self.chats = (default_chats or set()).copy()
         self.points_to_award = points_to_award
         self.timezone = timezone
@@ -79,10 +67,10 @@ class BirthdayModule(BaseModule):
 
     async def __process_birthdays(self, context: ContextTypes.DEFAULT_TYPE) -> None:
         current_date = datetime.now(self.timezone)
-        current_birthday = f"{current_date.month}/{current_date.day}"
+        current_birthday = f"{current_date.month}-{current_date.day}"
         logger.info(f"It is now {current_date} . Processing birthdays for {current_birthday} .")
 
-        users = birthdays.get(current_birthday, [])
+        users = self.users.get_by_birthday(current_birthday)
         if not users:
             logger.info("No users have birthdays today")
             return
@@ -92,11 +80,11 @@ class BirthdayModule(BaseModule):
         self.__add_points(users)
         await self.__announce_birthdays(users, context)
 
-    def __add_points(self, users: list[str]) -> None:
+    def __add_points(self, users: list[User]) -> None:
         for user in users:
             self.loy.add_points(user, self.points_to_award)
 
-    async def __announce_birthdays(self, users: list[str], context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def __announce_birthdays(self, users: list[User], context: ContextTypes.DEFAULT_TYPE) -> None:
         if not self.chats:
             logger.warning('There are no chats to announce the birthdays to.')
             return
@@ -105,7 +93,7 @@ class BirthdayModule(BaseModule):
             logger.warning('There are no users to include in the birthday announcement.')
             return
 
-        usernames = [f"@{user}" for user in users]
+        usernames = [f"@{user.telegram_username}" for user in users]
 
         if len(usernames) == 1:
             users_text = usernames[0]

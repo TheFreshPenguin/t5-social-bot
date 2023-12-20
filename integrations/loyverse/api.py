@@ -1,10 +1,13 @@
 import logging
 import requests
 import json
-from typing import Dict
+from typing import Optional
 
 import helpers.json
 from helpers.points import Points
+
+from data.models.user import User
+from data.repositories.user import UserRepository
 
 from integrations.loyverse.customer import Customer
 from integrations.loyverse.exceptions import InsufficientFundsError
@@ -14,39 +17,65 @@ logger = logging.getLogger(__name__)
 
 class LoyverseApi:
     BASE_URL = "https://api.loyverse.com/v1.0"
-    READ_ALL_CUSTOMERS_ENDPOINT = f"{BASE_URL}/customers?updated_at_min=2023-07-01T12:30:00.000Z&limit=250"
-    CREATE_OR_UPDATE_CUSTOMER_ENDPOINT = f"{BASE_URL}/customers"
+    CUSTOMERS_ENDPOINT = f"{BASE_URL}/customers"
+    READ_ALL_CUSTOMERS_ENDPOINT = f"{CUSTOMERS_ENDPOINT}?updated_at_min=2023-07-01T12:30:00.000Z&limit=250"
 
-    def __init__(self, token: str, read_only: bool = False):
+    def __init__(self, token: str, users: UserRepository, read_only: bool = False):
         self.token = token
+        self.users = users
         self.read_only = read_only
 
-    def get_balance(self, username: str) -> Points:
-        return self.__get_customer(username).points
+    def get_balance(self, user: User) -> Points:
+        return self._get_customer(user).points
 
-    def add_points(self, username: str, points: Points) -> None:
-        customer = self.__get_customer(username)
+    def add_points(self, user: User, points: Points) -> None:
+        customer = self._get_customer(user)
         customer.points += points
-        self.__save_customer(customer)
+        self._save_customer(customer)
 
-    def remove_points(self, username, points: Points) -> None:
-        customer = self.__get_customer(username)
+    def remove_points(self, user: User, points: Points) -> None:
+        customer = self._get_customer(user)
         if customer.points < points:
             raise InsufficientFundsError("You don't have enough points")
 
         customer.points -= points
-        self.__save_customer(customer)
+        self._save_customer(customer)
 
-    def __get_customer(self, username: str) -> Customer:
-        customers = self.__get_all_customers()
-        customer = customers.get(username)
+    def _get_customer(self, user: User) -> Customer:
+        customer = self._get_single_customer(user.loyverse_id) if user.loyverse_id else None
 
         if not customer:
-            raise Exception(f"@{username} is not a recognised user, try again!")
+            customer = self._initialize_customer(user)
+
+        if not customer:
+            raise Exception(f"@{user.telegram_username} is not a recognised user, try again!")
 
         return customer
 
-    def __get_all_customers(self) -> Dict[str, Customer]:
+    def _get_single_customer(self, customer_id: str) -> Optional[Customer]:
+        response = requests.get(f"{self.CUSTOMERS_ENDPOINT}/{customer_id}", headers={
+            "Authorization": f"Bearer {self.token}"
+        })
+
+        if response.status_code != 200:
+            logger.error(f"Loyverse get_single_customer error {response.status_code} occurred.")
+            return None
+
+        return Customer.from_json(response.json())
+
+    def _initialize_customer(self, user: User) -> Optional[Customer]:
+        customers = self._get_all_customers()
+        customer = customers.get(user.telegram_username)
+        if not customer:
+            return None
+
+        # Save the customer id to the user data for future reference
+        user = user.copy(loyverse_id=customer.customer_id)
+        self.users.save(user)
+
+        return customer
+
+    def _get_all_customers(self) -> dict[str, Customer]:
         response = requests.get(self.READ_ALL_CUSTOMERS_ENDPOINT, headers={
             "Authorization": f"Bearer {self.token}"
         })
@@ -58,13 +87,13 @@ class LoyverseApi:
         customers = [Customer.from_json(c) for c in response.json().get('customers')]
         return {c.username: c for c in customers if c}
 
-    def __save_customer(self, customer: Customer) -> None:
+    def _save_customer(self, customer: Customer) -> None:
         data = json.dumps(customer, default=helpers.json.default)
         if self.read_only:
             logger.info(data)
             return
 
-        response = requests.post(self.CREATE_OR_UPDATE_CUSTOMER_ENDPOINT, data=data, headers={
+        response = requests.post(self.CUSTOMERS_ENDPOINT, data=data, headers={
             "Authorization": f"Bearer {self.token}",
             "Content-Type": "application/json"
         })
