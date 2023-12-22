@@ -1,7 +1,9 @@
 import logging
 import requests
 import json
-from typing import Optional
+import pytz
+from typing import Optional, Generator
+from datetime import datetime
 
 import helpers.json
 from helpers.points import Points
@@ -10,6 +12,7 @@ from data.models.user import User
 from data.repositories.user import UserRepository
 
 from integrations.loyverse.customer import Customer
+from integrations.loyverse.receipt import Receipt
 from integrations.loyverse.exceptions import InsufficientFundsError, InvalidCustomerError
 
 logger = logging.getLogger(__name__)
@@ -19,6 +22,7 @@ class LoyverseApi:
     BASE_URL = "https://api.loyverse.com/v1.0"
     CUSTOMERS_ENDPOINT = f"{BASE_URL}/customers"
     READ_ALL_CUSTOMERS_ENDPOINT = f"{CUSTOMERS_ENDPOINT}?updated_at_min=2023-07-01T12:30:00.000Z&limit=250"
+    RECEIPTS_ENDPOINT = f"{BASE_URL}/receipts"
 
     def __init__(self, token: str, users: UserRepository, read_only: bool = False):
         self.token = token
@@ -40,6 +44,34 @@ class LoyverseApi:
 
         customer.points -= points
         self._save_customer(customer)
+
+    def get_receipts(self, since: datetime) -> Generator[Receipt, None, None]:
+        since_utc = since.replace(microsecond=0).astimezone(pytz.utc).isoformat().replace('+00:00', 'Z')
+        limit = 50
+        cursor = None
+
+        # Emulate do-while
+        while True:
+            response = requests.get(
+                f"{self.RECEIPTS_ENDPOINT}",
+                params={'created_at_min': since_utc, 'limit': limit, 'cursor': cursor},
+                headers={"Authorization": f"Bearer {self.token}"}
+            )
+
+            if response.status_code != 200:
+                logger.error(f"Loyverse get_receipts error {response.status_code} occurred.")
+                break
+
+            response_data = response.json()
+            raw_receipts = response_data.get('receipts', [])
+            cursor = response_data.get('cursor')
+
+            for raw_receipt in raw_receipts:
+                yield Receipt.from_json(raw_receipt, since.tzinfo)
+
+            if not cursor or len(raw_receipts) < limit:
+                break
+
 
     def _get_customer(self, user: User) -> Customer:
         customer = self._get_single_customer(user.loyverse_id) if user.loyverse_id else None
