@@ -93,12 +93,7 @@ class BirthdayModule(BaseModule):
             logger.warning('There are no users to include in the birthday announcement.')
             return
 
-        usernames = [f"@{user.telegram_username}" for user in users]
-
-        if len(usernames) == 1:
-            users_text = usernames[0]
-        else:
-            users_text = ', '.join(usernames[0:-1]) + ' and ' + usernames[-1]
+        users_text = BirthdayModule.__enumerate([BirthdayModule.__message_name(user) for user in users])
 
         announcement = prompts.get('birthday_announcement').format(
             users=users_text,
@@ -110,3 +105,12 @@ class BirthdayModule(BaseModule):
 
         for chat_id in self.chats:
             await context.bot.send_message(chat_id, announcement)
+
+    @staticmethod
+    def __message_name(user: User) -> str:
+        name = user.main_alias or user.first_name
+        return f"{name} / @{user.telegram_username}"
+
+    @staticmethod
+    def __enumerate(lst: list[str]) -> str:
+        return (', '.join(lst[:-1]) + ' and ' + lst[-1]) if len(lst) > 1 else lst[0]
