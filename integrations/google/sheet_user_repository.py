@@ -66,6 +66,9 @@ class GoogleSheetUserRepository(UserRepository):
         self.save_all([user])
 
     def save_all(self, users: list[User]) -> None:
+        if not users:
+            return
+
         with self.lock.gen_wlock():
             diff_data = {}
             for user in users:
