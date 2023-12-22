@@ -24,6 +24,7 @@ class GoogleSheetUserRepository(UserRepository):
         self.users_by_telegram_id: dict[int, UserHandle] = {}
         self.users_by_telegram_name: dict[str, UserHandle] = {}
         self.users_by_birthday: dict[str, list[UserHandle]] = {}
+        self.users_by_loyverse_id: dict[str, list[UserHandle]] = {}
         self.users_search: dict[str, set[UserHandle]] = {}
 
         # The repository data can be read and refreshed from different threads,
@@ -45,6 +46,10 @@ class GoogleSheetUserRepository(UserRepository):
         with self.lock.gen_rlock():
             date_string = birthday if isinstance(birthday, str) else birthday.strftime('%m-%d')
             return Handle.unwrap_list(self.users_by_birthday.get(date_string, []))
+
+    def get_by_loyverse_id(self, loyverse_id: str) -> Optional[User]:
+        with self.lock.gen_rlock():
+            return self.users_by_loyverse_id.get(loyverse_id, Handle(None)).inner
 
     def search(self, query: str) -> set[User]:
         with self.lock.gen_rlock():
@@ -98,6 +103,7 @@ class GoogleSheetUserRepository(UserRepository):
             self.users_by_full_name = {handle.inner.full_name: handle for handle in self.users if handle.inner.full_name}
             self.users_by_telegram_id = {handle.inner.telegram_id: handle for handle in self.users if handle.inner.telegram_id}
             self.users_by_telegram_name = {handle.inner.telegram_username: handle for handle in self.users if handle.inner.telegram_username}
+            self.users_by_loyverse_id = {handle.inner.loyverse_id: handle for handle in self.users if handle.inner.loyverse_id}
 
             users_with_birthday = [handle for handle in self.users if handle.inner.birthday]
             sorted_birthdays = sorted(users_with_birthday, key=lambda handle: handle.inner.birthday)
