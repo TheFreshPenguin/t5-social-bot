@@ -33,11 +33,17 @@ class LoyverseApi:
         return self._get_customer(user).points
 
     def add_points(self, user: User, points: Points) -> None:
+        if points.is_zero():
+            return
+
         customer = self._get_customer(user)
         customer.points += points
         self._save_customer(customer)
 
     def remove_points(self, user: User, points: Points) -> None:
+        if points.is_zero():
+            return
+
         customer = self._get_customer(user)
         if customer.points < points:
             raise InsufficientFundsError("You don't have enough points")
