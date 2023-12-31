@@ -1,11 +1,13 @@
 import logging
 import os
 import pytz
+import json
 
 from telegram.ext import ApplicationBuilder
 from dotenv import load_dotenv
 
 from helpers.access_checker import AccessChecker
+from helpers.visit_calculator import VisitCalculator
 from helpers.points import Points
 
 from integrations.loyverse.api import LoyverseApi
@@ -20,6 +22,7 @@ from modules.xmas import XmasModule
 from modules.raffle import RaffleModule
 from modules.birthday import BirthdayModule
 from modules.events import EventsModule
+from modules.visits import VisitsModule
 from modules.tracking import TrackingModule
 
 load_dotenv()
@@ -41,6 +44,7 @@ class MainConfig:
         self.google_api_credentials = os.getenv('google_api_credentials')
         self.google_spreadsheet_key = os.getenv('google_spreadsheet_key')
         self.xmas_loyverse_id = os.getenv('xmas_loyverse_id')
+        self.visits_to_points = {int(visits): Points(points) for visits, points in json.loads(os.getenv('visits_to_points') or '{}').items()}
 
 
 def main() -> None:
@@ -61,9 +65,14 @@ def main() -> None:
         point_masters=config.point_masters,
     )
 
+    vc = VisitCalculator(
+        checkpoints=config.visits_to_points
+    )
+
     modules = [
         PointsModule(loy=loy, users=user_repository),
         DonateModule(loy=loy, ac=ac, users=user_repository, announcement_chats=config.announcement_chats),
+        VisitsModule(loy=loy, users=user_repository, vc=vc, timezone=config.timezone),
         RaffleModule(loy=loy, ac=ac, users=user_repository),
         BirthdayModule(
             loy=loy,

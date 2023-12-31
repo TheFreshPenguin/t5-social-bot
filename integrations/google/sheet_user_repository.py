@@ -156,7 +156,9 @@ class GoogleSheetUserRepository(UserRepository):
             birthday=row.get('birthday', ''),
             telegram_id=GoogleSheetUserRepository._parse_int(row.get('telegram_id', '')),
             loyverse_id=row.get('loyverse_id', '').strip(),
-            last_private_chat=self._parse_datetime(row.get('last_private_chat', '').strip())
+            last_private_chat=self._parse_datetime(row.get('last_private_chat', '').strip()),
+            last_visit=self._parse_datetime(row.get('last_visit', '').strip()),
+            recent_visits=GoogleSheetUserRepository._parse_int(row.get('recent_visits', '')) or 0,
         )
 
     @staticmethod
@@ -168,7 +170,9 @@ class GoogleSheetUserRepository(UserRepository):
             'birthday': user.birthday,
             'telegram_id': user.telegram_id,
             'loyverse_id': user.loyverse_id,
-            'last_private_chat': user.last_private_chat.strftime('%Y-%m-%d %H:%M:%S') if user.last_private_chat else None
+            'last_private_chat': user.last_private_chat.strftime('%Y-%m-%d %H:%M:%S') if user.last_private_chat else None,
+            'last_visit': user.last_visit.strftime('%Y-%m-%d %H:%M:%S') if user.last_visit else None,
+            'recent_visits': user.recent_visits,
         }
 
     @staticmethod
