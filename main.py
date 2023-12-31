@@ -18,7 +18,6 @@ from integrations.google.sheet_user_repository import GoogleSheetUserRepository
 from modules.help import HelpModule
 from modules.points import PointsModule
 from modules.donate import DonateModule
-from modules.xmas import XmasModule
 from modules.raffle import RaffleModule
 from modules.birthday import BirthdayModule
 from modules.events import EventsModule
@@ -83,7 +82,6 @@ def main() -> None:
             timezone=config.timezone,
         ),
         EventsModule(repository=event_repository, timezone=config.timezone, ac=ac),
-        XmasModule(loy=loy, ac=ac, users=user_repository, xmas_loyverse_id=config.xmas_loyverse_id),
         TrackingModule(users=user_repository),
     ]
 
