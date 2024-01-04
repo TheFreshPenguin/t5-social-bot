@@ -77,7 +77,7 @@ def main() -> None:
             loy=loy,
             ac=ac,
             users=user_repository,
-            default_chats=config.announcement_chats,
+            announcement_chats=config.announcement_chats,
             points_to_award=config.birthday_points,
             timezone=config.timezone,
         ),
