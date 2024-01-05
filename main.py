@@ -36,6 +36,7 @@ class MainConfig:
         self.loyverse_token = os.getenv('loyverse_token')
         self.loyverse_read_only = bool(int(os.getenv('loyverse_read_only', 0)))
         self.announcement_chats = set([int(chatid) for chatid in os.getenv('announcement_chats', '').split(',') if chatid])
+        self.admin_chats = set([int(chatid) for chatid in os.getenv('admin_chats', '').split(',') if chatid])
         self.birthday_points = Points(os.getenv('birthday_points', 5))
         self.timezone = pytz.timezone(os.getenv('timezone', 'Europe/Bucharest'))
         self.masters = set([username for username in os.getenv('masters', '').split(',') if username])
@@ -78,6 +79,7 @@ def main() -> None:
             ac=ac,
             users=user_repository,
             announcement_chats=config.announcement_chats,
+            admin_chats=config.admin_chats,
             points_to_award=config.birthday_points,
             timezone=config.timezone,
         ),
