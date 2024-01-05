@@ -119,9 +119,10 @@ class GoogleSheetDatabase:
 
     @staticmethod
     def _header_to_key(text: str) -> str:
-        return (
-            re.sub(r"\([^)]*\)", '', text)  # Remove anything in parentheses
-            .lower()
-            .strip()
-            .replace(' ', '_')
-        )
+        text = re.sub(r"\([^)]*\)", '', text)  # Remove anything in parentheses
+        text = re.sub(r"\s+", ' ', text)  # Squash multiple whitespaces together
+        text = text.strip()  # Remove leading / trailing whitespace
+        text = text.lower()  # Everything should be lowercase
+        text = re.sub(r"[^a-z0-9_]", '_', text)  # Remove any characters except the ones used for variables
+
+        return text
