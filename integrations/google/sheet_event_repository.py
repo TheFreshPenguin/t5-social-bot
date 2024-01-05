@@ -24,7 +24,7 @@ class GoogleSheetEventRepository(EventRepository):
         self.lock = rwlock.RWLockWrite()
 
         self.events: list[EventHandle] = []
-        self.events_by_date: dict[str, list[EventHandle]] = {}
+        self.events_by_date: dict[date, list[EventHandle]] = {}
 
         database.events.subscribe(self._load)
 
@@ -33,15 +33,16 @@ class GoogleSheetEventRepository(EventRepository):
             return EventHandle.unwrap_list(self.events)
 
     def get_events_on(self, on_date: Union[date, datetime]) -> list[Event]:
+        real_date = on_date if type(on_date) is date else on_date.date()
         with self.lock.gen_rlock():
-            return EventHandle.unwrap_list(self.events_by_date.get(on_date.strftime('%Y-%m-%d'), []))
+            return EventHandle.unwrap_list(self.events_by_date.get(real_date, []))
 
     def _load(self, raw_data: list) -> None:
         with self.lock.gen_wlock():
             self.events = [EventHandle(self._from_row(row)) for row in raw_data]
 
             self.events.sort(key=lambda handle: handle.inner.start_date)
-            grouped_events = groupby(self.events, key=lambda handle: handle.inner.start_date.strftime('%Y-%m-%d'))
+            grouped_events = groupby(self.events, key=lambda handle: handle.inner.start_date.date())
             self.events_by_date = {key: list(items) for key, items in grouped_events}
 
             # We assume that main events have a duration of 3 hours
