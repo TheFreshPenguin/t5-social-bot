@@ -8,6 +8,7 @@ from readerwriterlock import rwlock
 
 from data.repositories.user import UserRepository
 from data.models.user import User
+from data.models.user_role import UserRole
 
 from integrations.google.handle import Handle
 from integrations.google.sheet_database import GoogleSheetDatabase
@@ -152,6 +153,7 @@ class GoogleSheetUserRepository(UserRepository):
         return User(
             full_name=row.get('full_name', '').strip(),
             aliases=GoogleSheetUserRepository._parse_aliases(row.get('aliases', '')),
+            role=GoogleSheetUserRepository._parse_user_role(row.get('role', '')),
             telegram_username=row.get('telegram_username', '').strip(),
             birthday=row.get('birthday', ''),
             telegram_id=GoogleSheetUserRepository._parse_int(row.get('telegram_id', '')),
@@ -166,6 +168,7 @@ class GoogleSheetUserRepository(UserRepository):
         return {
             'full_name': user.full_name,
             'aliases': ','.join(user.aliases),
+            'role': user.role.value.capitalize(),
             'telegram_username': user.telegram_username,
             'birthday': user.birthday,
             'telegram_id': user.telegram_id,
@@ -198,3 +201,10 @@ class GoogleSheetUserRepository(UserRepository):
     def _parse_aliases(alias_string: str) -> list[str]:
         clean = [alias.strip() for alias in alias_string.split(',')]
         return [alias for alias in clean if alias]
+
+    @staticmethod
+    def _parse_user_role(user_role_string: str) -> Optional[UserRole]:
+        try:
+            return UserRole(user_role_string.strip().lower())
+        except ValueError:
+            return UserRole.CHAMPION
