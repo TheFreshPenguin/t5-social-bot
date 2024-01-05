@@ -82,7 +82,7 @@ def main() -> None:
             timezone=config.timezone,
         ),
         EventsModule(repository=event_repository, timezone=config.timezone, ac=ac),
-        TrackingModule(users=user_repository),
+        TrackingModule(users=user_repository, timezone=config.timezone),
     ]
 
     # The help module must be last because it catches all chat, and it picks up menu buttons from the other modules
