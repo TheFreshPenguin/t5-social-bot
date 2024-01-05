@@ -8,6 +8,7 @@ from readerwriterlock import rwlock
 
 from data.repositories.user import UserRepository
 from data.models.user import User
+from data.models.user_role import UserRole
 
 from integrations.google.handle import Handle
 from integrations.google.sheet_database import GoogleSheetDatabase
@@ -24,6 +25,7 @@ class GoogleSheetUserRepository(UserRepository):
         self.users_by_telegram_id: dict[int, UserHandle] = {}
         self.users_by_telegram_name: dict[str, UserHandle] = {}
         self.users_by_birthday: dict[str, list[UserHandle]] = {}
+        self.users_by_loyverse_id: dict[str, list[UserHandle]] = {}
         self.users_search: dict[str, set[UserHandle]] = {}
 
         # The repository data can be read and refreshed from different threads,
@@ -46,6 +48,10 @@ class GoogleSheetUserRepository(UserRepository):
             date_string = birthday if isinstance(birthday, str) else birthday.strftime('%m-%d')
             return Handle.unwrap_list(self.users_by_birthday.get(date_string, []))
 
+    def get_by_loyverse_id(self, loyverse_id: str) -> Optional[User]:
+        with self.lock.gen_rlock():
+            return self.users_by_loyverse_id.get(loyverse_id, Handle(None)).inner
+
     def search(self, query: str) -> set[User]:
         with self.lock.gen_rlock():
             query = query.lower()
@@ -66,6 +72,9 @@ class GoogleSheetUserRepository(UserRepository):
         self.save_all([user])
 
     def save_all(self, users: list[User]) -> None:
+        if not users:
+            return
+
         with self.lock.gen_wlock():
             diff_data = {}
             for user in users:
@@ -95,6 +104,7 @@ class GoogleSheetUserRepository(UserRepository):
             self.users_by_full_name = {handle.inner.full_name: handle for handle in self.users if handle.inner.full_name}
             self.users_by_telegram_id = {handle.inner.telegram_id: handle for handle in self.users if handle.inner.telegram_id}
             self.users_by_telegram_name = {handle.inner.telegram_username: handle for handle in self.users if handle.inner.telegram_username}
+            self.users_by_loyverse_id = {handle.inner.loyverse_id: handle for handle in self.users if handle.inner.loyverse_id}
 
             users_with_birthday = [handle for handle in self.users if handle.inner.birthday]
             sorted_birthdays = sorted(users_with_birthday, key=lambda handle: handle.inner.birthday)
@@ -143,11 +153,14 @@ class GoogleSheetUserRepository(UserRepository):
         return User(
             full_name=row.get('full_name', '').strip(),
             aliases=GoogleSheetUserRepository._parse_aliases(row.get('aliases', '')),
+            role=GoogleSheetUserRepository._parse_user_role(row.get('role', '')),
             telegram_username=row.get('telegram_username', '').strip(),
             birthday=row.get('birthday', ''),
             telegram_id=GoogleSheetUserRepository._parse_int(row.get('telegram_id', '')),
             loyverse_id=row.get('loyverse_id', '').strip(),
-            last_private_chat=self._parse_datetime(row.get('last_private_chat', '').strip())
+            last_private_chat=self._parse_datetime(row.get('last_private_chat', '').strip()),
+            last_visit=self._parse_datetime(row.get('last_visit', '').strip()),
+            recent_visits=GoogleSheetUserRepository._parse_int(row.get('recent_visits', '')) or 0,
         )
 
     @staticmethod
@@ -155,11 +168,14 @@ class GoogleSheetUserRepository(UserRepository):
         return {
             'full_name': user.full_name,
             'aliases': ','.join(user.aliases),
+            'role': user.role.value.capitalize(),
             'telegram_username': user.telegram_username,
             'birthday': user.birthday,
             'telegram_id': user.telegram_id,
             'loyverse_id': user.loyverse_id,
-            'last_private_chat': user.last_private_chat.strftime('%Y-%m-%d %H:%M:%S') if user.last_private_chat else None
+            'last_private_chat': user.last_private_chat.strftime('%Y-%m-%d %H:%M:%S') if user.last_private_chat else None,
+            'last_visit': user.last_visit.strftime('%Y-%m-%d %H:%M:%S') if user.last_visit else None,
+            'recent_visits': user.recent_visits,
         }
 
     @staticmethod
@@ -185,3 +201,10 @@ class GoogleSheetUserRepository(UserRepository):
     def _parse_aliases(alias_string: str) -> list[str]:
         clean = [alias.strip() for alias in alias_string.split(',')]
         return [alias for alias in clean if alias]
+
+    @staticmethod
+    def _parse_user_role(user_role_string: str) -> Optional[UserRole]:
+        try:
+            return UserRole(user_role_string.strip().lower())
+        except ValueError:
+            return UserRole.CHAMPION

@@ -1,5 +1,6 @@
 import logging
 import pytz
+from typing import Optional
 from datetime import datetime, time
 import random
 
@@ -25,80 +26,55 @@ with open("resources/birthday_messages.txt", "r") as file:
 
 
 class BirthdayModule(BaseModule):
-    def __init__(self, loy: LoyverseApi, ac: AccessChecker, users: UserRepository, default_chats: set = None, points_to_award: Points = Points(5), timezone: pytz.timezone = None):
-        self.loy = loy
-        self.ac = ac
-        self.users = users
-        self.chats = (default_chats or set()).copy()
-        self.points_to_award = points_to_award
-        self.timezone = timezone
+    def __init__(self, loy: LoyverseApi, ac: AccessChecker, users: UserRepository, announcement_chats: set[int] = None, points_to_award: Points = Points(5), timezone: Optional[pytz.timezone] = None):
+        self.loy: LoyverseApi = loy
+        self.ac: AccessChecker = ac
+        self.users: UserRepository = users
+        self.announcement_chats: set[int] = (announcement_chats or set()).copy()
+        self.points_to_award: Points = points_to_award
+        self.timezone: Optional[pytz.timezone] = timezone
 
     def install(self, application: Application) -> None:
-        application.add_handler(CommandHandler("start_announcing_birthdays", self.__start_announcing_birthdays))
-        application.add_handler(CommandHandler("stop_announcing_birthdays", self.__stop_announcing_birthdays))
-        application.add_handler(CommandHandler("force_announce_birthdays", self.__force_announce_birthdays, filters.ChatType.PRIVATE))
+        application.add_handler(CommandHandler('force_announce_birthdays', self._force_announce_birthdays, filters.ChatType.PRIVATE))
 
         daily_time = time(0, 0, 0, 0, self.timezone)
-        application.job_queue.run_daily(self.__process_birthdays, daily_time)
+        application.job_queue.run_daily(self._process_birthdays, daily_time)
 
-        logger.info(f"Birthday module installed with config: chats: {self.chats} / points_to_award: {self.points_to_award} / timezone: {self.timezone} / daily_time: {daily_time}")
+        logger.info("Birthday module installed")
 
-    async def __start_announcing_birthdays(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def _force_announce_birthdays(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if not self.ac.is_master(update.effective_user.username):
             return
 
-        self.chats.add(update.effective_chat.id)
-        await update.message.reply_text("I will announce birthdays in this chat, every day at midnight.")
-        logger.info(f'Birthdays will be announced to {self.chats}')
+        await self._process_birthdays(context)
 
-    async def __stop_announcing_birthdays(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        if not self.ac.is_master(update.effective_user.username):
-            return
-
-        self.chats.remove(update.effective_chat.id)
-        await update.message.reply_text("I will no longer announce birthdays in this chat.")
-        logger.info(f'Birthdays will be announced to {self.chats}')
-
-    async def __force_announce_birthdays(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        if not self.ac.is_master(update.effective_user.username):
-            return
-
-        await self.__process_birthdays(context)
-
-    async def __process_birthdays(self, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def _process_birthdays(self, context: ContextTypes.DEFAULT_TYPE) -> None:
         current_date = datetime.now(self.timezone)
-        current_birthday = f"{current_date.month}-{current_date.day}"
-        logger.info(f"It is now {current_date} . Processing birthdays for {current_birthday} .")
+        logger.info(f"Processing birthdays for {current_date}.")
 
-        users = self.users.get_by_birthday(current_birthday)
+        users = self.users.get_by_birthday(current_date)
         if not users:
             logger.info("No users have birthdays today")
             return
 
         logger.info(f"The following users have birthdays today: {users}")
 
-        self.__add_points(users)
-        await self.__announce_birthdays(users, context)
+        self._add_points(users)
+        await self._announce_birthdays(users, context)
 
-    def __add_points(self, users: list[User]) -> None:
+    def _add_points(self, users: list[User]) -> None:
         for user in users:
             self.loy.add_points(user, self.points_to_award)
 
-    async def __announce_birthdays(self, users: list[User], context: ContextTypes.DEFAULT_TYPE) -> None:
-        if not self.chats:
+    async def _announce_birthdays(self, users: list[User], context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not self.announcement_chats:
             logger.warning('There are no chats to announce the birthdays to.')
             return
 
         if not users:
-            logger.warning('There are no users to include in the birthday announcement.')
             return
 
-        usernames = [f"@{user.telegram_username}" for user in users]
-
-        if len(usernames) == 1:
-            users_text = usernames[0]
-        else:
-            users_text = ', '.join(usernames[0:-1]) + ' and ' + usernames[-1]
+        users_text = BirthdayModule._enumerate([BirthdayModule._message_name(user) for user in users])
 
         announcement = prompts.get('birthday_announcement').format(
             users=users_text,
@@ -106,7 +82,14 @@ class BirthdayModule(BaseModule):
             points=self.points_to_award
         )
 
-        logger.info(announcement)
-
-        for chat_id in self.chats:
+        for chat_id in self.announcement_chats:
             await context.bot.send_message(chat_id, announcement)
+
+    @staticmethod
+    def _message_name(user: User) -> str:
+        name = user.main_alias or user.first_name
+        return f"{name} / @{user.telegram_username}"
+
+    @staticmethod
+    def _enumerate(lst: list[str]) -> str:
+        return (', '.join(lst[:-1]) + ' and ' + lst[-1]) if len(lst) > 1 else lst[0]

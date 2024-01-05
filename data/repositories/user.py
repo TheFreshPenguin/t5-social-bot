@@ -14,6 +14,9 @@ class UserRepository:
     def get_by_birthday(self, birthday: Union[str, date, datetime]) -> list[User]:
         pass
 
+    def get_by_loyverse_id(self, loyverse_id: str) -> Optional[User]:
+        pass
+
     def search(self, query: str) -> set[User]:
         pass
 

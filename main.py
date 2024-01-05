@@ -1,11 +1,13 @@
 import logging
 import os
 import pytz
+import json
 
 from telegram.ext import ApplicationBuilder
 from dotenv import load_dotenv
 
 from helpers.access_checker import AccessChecker
+from helpers.visit_calculator import VisitCalculator
 from helpers.points import Points
 
 from integrations.loyverse.api import LoyverseApi
@@ -16,10 +18,10 @@ from integrations.google.sheet_user_repository import GoogleSheetUserRepository
 from modules.help import HelpModule
 from modules.points import PointsModule
 from modules.donate import DonateModule
-from modules.xmas import XmasModule
 from modules.raffle import RaffleModule
 from modules.birthday import BirthdayModule
 from modules.events import EventsModule
+from modules.visits import VisitsModule
 from modules.tracking import TrackingModule
 
 load_dotenv()
@@ -41,6 +43,7 @@ class MainConfig:
         self.google_api_credentials = os.getenv('google_api_credentials')
         self.google_spreadsheet_key = os.getenv('google_spreadsheet_key')
         self.xmas_loyverse_id = os.getenv('xmas_loyverse_id')
+        self.visits_to_points = {int(visits): Points(points) for visits, points in json.loads(os.getenv('visits_to_points') or '{}').items()}
 
 
 def main() -> None:
@@ -61,20 +64,24 @@ def main() -> None:
         point_masters=config.point_masters,
     )
 
+    vc = VisitCalculator(
+        checkpoints=config.visits_to_points
+    )
+
     modules = [
         PointsModule(loy=loy, users=user_repository),
         DonateModule(loy=loy, ac=ac, users=user_repository, announcement_chats=config.announcement_chats),
+        VisitsModule(loy=loy, users=user_repository, vc=vc, timezone=config.timezone),
         RaffleModule(loy=loy, ac=ac, users=user_repository),
         BirthdayModule(
             loy=loy,
             ac=ac,
             users=user_repository,
-            default_chats=config.announcement_chats,
+            announcement_chats=config.announcement_chats,
             points_to_award=config.birthday_points,
             timezone=config.timezone,
         ),
         EventsModule(repository=event_repository, timezone=config.timezone, ac=ac),
-        XmasModule(loy=loy, ac=ac, users=user_repository, xmas_loyverse_id=config.xmas_loyverse_id),
         TrackingModule(users=user_repository),
     ]
 

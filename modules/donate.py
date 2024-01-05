@@ -129,6 +129,9 @@ class DonateModule(BaseModule):
         while (i < len(args)) and (not args[i].isnumeric()):
             i += 1
 
+        if i == 0:
+            raise CommandSyntaxError()
+
         if i >= len(args):
             raise CommandSyntaxError()
 
