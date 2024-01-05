@@ -9,6 +9,7 @@ from telegram.constants import ChatType
 from telegram.ext import Application, ContextTypes, CommandHandler, CallbackQueryHandler
 
 from data.models.user import User
+from data.models.user_role import UserRole
 from data.repositories.user import UserRepository
 
 from modules.base_module import BaseModule
@@ -72,11 +73,12 @@ class VisitsModule(BaseModule):
                     date_format = '%A, %d %B'
                 reply_parts.append(f"The last time I saw you there was on {user.last_visit.strftime(date_format)}.")
 
-            next_checkpoint = self.vc.get_next_checkpoint(visits_this_month)
-            if next_checkpoint:
-                visits_until_checkpoint = next_checkpoint[0] - visits_this_month
-                more = 'more ' if visits_this_month else ''
-                reply_parts.append(f"If you visit {visits_until_checkpoint} {more}times, you will be rewarded with {next_checkpoint[1]} points!")
+            if VisitsModule._can_earn_points(user):
+                next_checkpoint = self.vc.get_next_checkpoint(visits_this_month)
+                if next_checkpoint:
+                    visits_until_checkpoint = next_checkpoint[0] - visits_this_month
+                    more = 'more ' if visits_this_month else ''
+                    reply_parts.append(f"If you visit {visits_until_checkpoint} {more}times, you will be rewarded with {next_checkpoint[1]} points!")
 
             reply_parts.append(f"Please remember to pay your tab at the bar so I can tell you've been around.")
 
@@ -132,7 +134,7 @@ class VisitsModule(BaseModule):
         return user, receipt.created_at
 
     async def _send_messages(self, updates: dict[User, ReachedCheckpoints], context: ContextTypes.DEFAULT_TYPE):
-        updates_with_points = {user: points for user, points in updates.items() if points}
+        updates_with_points = {user: points for user, points in updates.items() if points and VisitsModule._can_earn_points(user)}
         for user, month_checkpoints in updates_with_points.items():
             for month, checkpoints in month_checkpoints.items():
                 total_points = sum(checkpoints.values(), start=Points(0))
@@ -157,3 +159,7 @@ class VisitsModule(BaseModule):
             raise UserFriendlyError("Sorry, but this feature is for Community Champions only.")
 
         return sender
+
+    @staticmethod
+    def _can_earn_points(user: User) -> bool:
+        return user.role != UserRole.STAFF
