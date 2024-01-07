@@ -60,7 +60,7 @@ class XmasModule(BaseModule):
 
             if update.message.chat.type == ChatType.PRIVATE:
                 await update.message.reply_text(
-                    f"You are about to donate {points} to the Staff Xmas Pot. Are you sure?",
+                    f"You are about to donate {points} point{points.plural} to the Staff Xmas Pot. Are you sure?",
                     reply_markup=XmasModule._confirm_keyboard(points)
                 )
                 return
@@ -118,7 +118,7 @@ class XmasModule(BaseModule):
 
     def _validate_points(self, raw_points: str) -> Points:
         points = Points(raw_points)
-        if not points.is_positive():
+        if not points.is_positive:
             raise UserFriendlyError("Your sense of charity is as high as the amount of points you tried to donate - donations have to be greater than zero.")
 
         return points
@@ -157,8 +157,8 @@ class XmasModule(BaseModule):
         sarc = donate_sarcasm.random
 
         return {
-            "sender": f"{sarc} You donated {points} points to the Staff Xmas Pot.",
-            "announcement": f"{sarc} {sender.friendly_name} donated {points} points to the Staff Xmas Pot.",
+            "sender": f"{sarc} You donated {points} point{points.plural} to the Staff Xmas Pot.",
+            "announcement": f"{sarc} {sender.friendly_name} donated {points} point{points.plural} to the Staff Xmas Pot.",
         }
 
     @staticmethod

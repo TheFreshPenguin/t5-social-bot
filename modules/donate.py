@@ -63,7 +63,7 @@ class DonateModule(BaseModule):
             if update.message.chat.type == ChatType.PRIVATE:
                 if recipient:
                     await update.message.reply_text(
-                        f"You are about to donate {points} to {recipient.specific_name}. Are you sure?",
+                        f"You are about to donate {points} point{points.plural} to {recipient.specific_name}. Are you sure?",
                         reply_markup=DonateModule._confirm_keyboard(recipient, points)
                     )
                 else:
@@ -173,7 +173,7 @@ class DonateModule(BaseModule):
 
     def _validate_points(self, raw_points: str) -> Points:
         points = Points(raw_points)
-        if not points.is_positive():
+        if not points.is_positive:
             raise UserFriendlyError("Your sense of charity is as high as the amount of points you tried to donate - donations have to be greater than zero.")
 
         return points
@@ -238,9 +238,9 @@ class DonateModule(BaseModule):
         sarc = donate_sarcasm.random
 
         return {
-            "sender": f"{sarc} You donated {points} points to {recipient.friendly_name}.",
-            "recipient": f"{sender.friendly_name} donated {points} to you!",
-            "announcement": f"{sarc} {sender.friendly_name} donated {points} points to {recipient.friendly_name}.",
+            "sender": f"{sarc} You donated {points} point{points.plural} to {recipient.friendly_name}.",
+            "recipient": f"{sender.friendly_name} donated {points} point{points.plural} to you!",
+            "announcement": f"{sarc} {sender.friendly_name} donated {points} point{points.plural} to {recipient.friendly_name}.",
         }
 
     @staticmethod

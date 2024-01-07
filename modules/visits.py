@@ -139,13 +139,13 @@ class VisitsModule(BaseModule):
                 total_points = sum(checkpoints.values(), start=Points(0))
                 a_total_of = 'a total of ' if len(checkpoints) > 1 else ''
                 self.loy.add_points(user, total_points)
-                print(f"{user.full_name} receives {a_total_of}{total_points} points for visits in {month.strftime('%B')}")
+                print(f"{user.full_name} receives {a_total_of}{total_points} point{total_points.plural} for visits in {month.strftime('%B')}")
 
                 if user.telegram_id:
                     max_checkpoint = max(checkpoints.keys())
                     messages = visits_checkpoints.get(max_checkpoint, [])
                     message = (messages.random + "\n\n") if messages else None
-                    announcement = f"{message}For your visits in {month.strftime('%B')} you receive {a_total_of}{total_points} points!"
+                    announcement = f"{message}For your visits in {month.strftime('%B')} you receive {a_total_of}{total_points} point{total_points.plural}!"
                     await context.bot.send_message(user.telegram_id, announcement)
 
     def _validate_user(self, update: Update) -> User:

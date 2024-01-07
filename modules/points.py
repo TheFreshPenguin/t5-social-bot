@@ -41,10 +41,10 @@ class PointsModule(BaseModule):
             sarc = points_balance_sarcasm.random
 
             if update.effective_chat.type == ChatType.PRIVATE:
-                reply = f"{sarc}\n\nYou have {balance} T5 Loyalty Points!"
+                reply = f"{sarc}\n\nYou have {balance} T5 Loyalty Point{balance.plural}!"
             else:
                 reply = (
-                    f"{sarc} {user.main_alias or user.first_name}, you have {balance} T5 Loyalty Points!\n\n" +
+                    f"{sarc} {user.main_alias or user.first_name}, you have {balance} T5 Loyalty Point{balance.plural}!\n\n" +
                     'You can also <a href="https://t.me/T5socialBot?start=help">talk to me directly</a> to check your points!'
                 )
         except UserFriendlyError as e:

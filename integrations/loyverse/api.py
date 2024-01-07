@@ -33,7 +33,7 @@ class LoyverseApi:
         return self._get_customer(user).points
 
     def add_points(self, user: User, points: Points) -> None:
-        if points.is_zero():
+        if points.is_zero:
             return
 
         customer = self._get_customer(user)
@@ -41,7 +41,7 @@ class LoyverseApi:
         self._save_customer(customer)
 
     def remove_points(self, user: User, points: Points) -> None:
-        if points.is_zero():
+        if points.is_zero:
             return
 
         customer = self._get_customer(user)

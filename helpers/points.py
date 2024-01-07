@@ -40,14 +40,21 @@ class Points:
     def __repr__(self):
         return str(self)
 
+    @property
     def is_positive(self) -> bool:
         return self.amount > Decimal(0)
 
+    @property
     def is_negative(self) -> bool:
         return self.amount < Decimal(0)
 
+    @property
     def is_zero(self) -> bool:
         return self.amount.is_zero()
+
+    @property
+    def plural(self) -> str:
+        return "" if self.amount == Decimal(1) else "s"
 
     def to_integral(self) -> "Points":
         return Points(self.amount.to_integral(rounding=ROUND_FLOOR))
