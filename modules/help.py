@@ -44,10 +44,10 @@ class HelpModule(BaseModule):
 
     async def __help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if update.effective_chat.type == ChatType.PRIVATE:
-            await update.message.reply_html(WELCOME_PRIVATE, reply_markup=self.__menu_keyboard())
+            await update.message.reply_html(WELCOME_PRIVATE, reply_markup=self.__menu_keyboard(), disable_web_page_preview=True)
             return
 
-        await update.message.reply_html(WELCOME_PUBLIC)
+        await update.message.reply_html(WELCOME_PUBLIC, disable_web_page_preview=True)
 
     def __menu_keyboard(self) -> InlineKeyboardMarkup:
         menu = [module.get_menu_buttons() for module in self.menu_modules]

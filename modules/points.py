@@ -55,9 +55,9 @@ class PointsModule(BaseModule):
 
         if update.callback_query:
             await update.callback_query.answer()
-            await update.callback_query.edit_message_text(reply)
+            await update.callback_query.edit_message_text(reply, disable_web_page_preview=True)
         else:
-            await update.message.reply_html(reply)
+            await update.message.reply_html(reply, disable_web_page_preview=True)
 
     def _validate_user(self, update: Update) -> User:
         sender_name = update.effective_user.username

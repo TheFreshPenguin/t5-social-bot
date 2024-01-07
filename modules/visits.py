@@ -89,13 +89,13 @@ class VisitsModule(BaseModule):
             reply = f"BeeDeeBeeBoop 🤖 Error : {e}"
 
         if update.effective_chat.type != ChatType.PRIVATE:
-            reply += "\n\n" + 'You can also <a href="https://t.me/T5socialBot?start=help">talk to me directly</a> to check your points!'
+            reply += "\n\n" + 'You can also <a href="https://t.me/T5socialBot?start=help">talk to me directly</a> to check your visits!'
 
         if update.callback_query:
             await update.callback_query.answer()
-            await update.callback_query.edit_message_text(reply)
+            await update.callback_query.edit_message_text(reply, disable_web_page_preview=True)
         else:
-            await update.message.reply_html(reply)
+            await update.message.reply_html(reply, disable_web_page_preview=True)
 
     async def _update_visits(self, context: ContextTypes.DEFAULT_TYPE) -> None:
         # This function may take several seconds to run, so it's important that we sample the time at the start
