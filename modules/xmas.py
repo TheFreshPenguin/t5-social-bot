@@ -161,7 +161,7 @@ class XmasModule(BaseModule):
 
         return {
             "sender": f"{sarc} You donated {points} points to the Staff Xmas Pot.",
-            "announcement": f"{sarc} {XmasModule._message_name(sender)} donated {points} points to the Staff Xmas Pot.",
+            "announcement": f"{sarc} {sender.friendly_name} donated {points} points to the Staff Xmas Pot.",
         }
 
     @staticmethod
@@ -180,8 +180,3 @@ class XmasModule(BaseModule):
     @staticmethod
     def _cancel_button(text: str = 'Cancel') -> InlineKeyboardButton:
         return InlineKeyboardButton(text, callback_data=f"xmas/cancel")
-
-    @staticmethod
-    def _message_name(user: User) -> str:
-        name = user.main_alias or user.first_name
-        return f"{name} / @{user.telegram_username}"

@@ -66,7 +66,7 @@ class DonateModule(BaseModule):
             if update.message.chat.type == ChatType.PRIVATE:
                 if recipient:
                     await update.message.reply_text(
-                        f"You are about to donate {points} to {DonateModule._search_name(recipient)}. Are you sure?",
+                        f"You are about to donate {points} to {recipient.specific_name}. Are you sure?",
                         reply_markup=DonateModule._confirm_keyboard(recipient, points)
                     )
                 else:
@@ -232,7 +232,7 @@ class DonateModule(BaseModule):
         try:
             self.loy.add_points(recipient, points)
         except InvalidCustomerError as error:
-            raise UserFriendlyError(f"{DonateModule._message_name(recipient)} does not have a bar tab as a Community Champion. You should ask Rob to make one for them.") from error
+            raise UserFriendlyError(f"{recipient.friendly_name} does not have a bar tab as a Community Champion. You should ask Rob to make one for them.") from error
         except Exception as error:
             raise UserFriendlyError("The donation has failed - perhaps the stars were not right? You can try again later.") from error
 
@@ -241,9 +241,9 @@ class DonateModule(BaseModule):
         sarc = random.choice(sarcastic_comments).rstrip('\n')
 
         return {
-            "sender": f"{sarc} You donated {points} points to {DonateModule._message_name(recipient)}.",
-            "recipient": f"{DonateModule._message_name(sender)} donated {points} to you!",
-            "announcement": f"{sarc} {DonateModule._message_name(sender)} donated {points} points to {DonateModule._message_name(recipient)}.",
+            "sender": f"{sarc} You donated {points} points to {recipient.friendly_name}.",
+            "recipient": f"{sender.friendly_name} donated {points} to you!",
+            "announcement": f"{sarc} {sender.friendly_name} donated {points} points to {recipient.friendly_name}.",
         }
 
     @staticmethod
@@ -266,20 +266,10 @@ class DonateModule(BaseModule):
     @staticmethod
     def _confirm_button(user: User, points, text: str = '') -> InlineKeyboardButton:
         return InlineKeyboardButton(
-            text or DonateModule._search_name(user),
+            text or user.specific_name,
             callback_data=f"donate/confirm/{user.telegram_username}/{points}"
         )
 
     @staticmethod
     def _cancel_button(text: str = 'Cancel') -> InlineKeyboardButton:
         return InlineKeyboardButton(text, callback_data=f"donate/cancel")
-
-    @staticmethod
-    def _message_name(user: User) -> str:
-        name = user.main_alias or user.first_name
-        return f"{name} / @{user.telegram_username}"
-
-    @staticmethod
-    def _search_name(user: User) -> str:
-        name = user.main_alias or user.full_name
-        return f"{name} / @{user.telegram_username}"

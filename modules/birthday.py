@@ -77,7 +77,7 @@ class BirthdayModule(BaseModule):
         if not users:
             return
 
-        users_text = BirthdayModule._enumerate([BirthdayModule._message_name(user) for user in users])
+        users_text = BirthdayModule._enumerate([user.friendly_name for user in users])
 
         announcement = prompts.get('birthday_announcement').format(
             users=users_text,
@@ -126,15 +126,10 @@ class BirthdayModule(BaseModule):
     def _format_birthday_list(heading: str, birthdays: dict[date, list[User]]) -> str:
         message_parts = [f"<b>{heading}:</b>"]
         for day, users in birthdays.items():
-            users_text = BirthdayModule._enumerate([BirthdayModule._message_name(user) for user in users])
+            users_text = BirthdayModule._enumerate([user.friendly_name for user in users])
             message_parts.append(f"{day.strftime('%A, %d %B')} - {users_text}")
 
         return "\n".join(message_parts)
-
-    @staticmethod
-    def _message_name(user: User) -> str:
-        name = user.main_alias or user.first_name
-        return f"{name} / @{user.telegram_username}"
 
     @staticmethod
     def _enumerate(lst: list[str]) -> str:
