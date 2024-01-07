@@ -39,15 +39,19 @@ class PointsModule(BaseModule):
             user = self._validate_user(update)
             balance = self.loy.get_balance(user).to_integral()
             sarc = points_balance_sarcasm.random
-            reply = f"{sarc} @{user.telegram_username}, you have {balance} T5 Loyalty Points!"
+
+            if update.effective_chat.type == ChatType.PRIVATE:
+                reply = f"{sarc}\n\nYou have {balance} T5 Loyalty Points!"
+            else:
+                reply = (
+                    f"{sarc} {user.main_alias or user.first_name}, you have {balance} T5 Loyalty Points!\n\n" +
+                    'You can also <a href="https://t.me/T5socialBot?start=help">talk to me directly</a> to check your points!'
+                )
         except UserFriendlyError as e:
             reply = str(e)
         except Exception as e:
             logger.exception(e)
             reply = f"BeeDeeBeeBoop 🤖 Error : {e}"
-
-        if update.effective_chat.type != ChatType.PRIVATE:
-            reply += "\n\n" + 'You can also <a href="https://t.me/T5socialBot?start=help">talk to me directly</a> to check your points!'
 
         if update.callback_query:
             await update.callback_query.answer()
