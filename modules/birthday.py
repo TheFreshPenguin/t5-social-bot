@@ -13,7 +13,6 @@ from data.repositories.user import UserRepository
 from modules.base_module import BaseModule
 from helpers.access_checker import AccessChecker
 from helpers.points import Points
-from helpers.prompt_parser import parse
 
 from messages import birthday_congratulations
 
@@ -21,7 +20,12 @@ from integrations.loyverse.api import LoyverseApi
 
 logger = logging.getLogger(__name__)
 
-prompts = parse("resources/birthday_prompts.txt")
+BIRTHDAY_ANNOUNCEMENT = """La Mulți Ani {users} 🎉
+
+{message}
+
+Enjoy {points} Loyalty Points from T5 🎁
+"""
 
 class BirthdayModule(BaseModule):
     def __init__(self, loy: LoyverseApi, ac: AccessChecker, users: UserRepository, announcement_chats: set[int] = None, admin_chats: set[int] = None, points_to_award: Points = Points(5), timezone: Optional[pytz.timezone] = None):
@@ -76,7 +80,7 @@ class BirthdayModule(BaseModule):
 
         users_text = BirthdayModule._enumerate([user.friendly_name for user in users])
 
-        announcement = prompts.get('birthday_announcement').format(
+        announcement = BIRTHDAY_ANNOUNCEMENT.format(
             users=users_text,
             message=birthday_congratulations.random,
             points=self.points_to_award

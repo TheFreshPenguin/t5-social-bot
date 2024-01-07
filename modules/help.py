@@ -5,11 +5,28 @@ from telegram.constants import ChatType
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 
 from modules.base_module import BaseModule
-from helpers.prompt_parser import parse
 
 logger = logging.getLogger(__name__)
 
-prompts = parse("resources/help_prompts.txt")
+WELCOME_PUBLIC = """BeeDeeBeeBoop 🤖
+
+I am the T5 Social Telegram bot!
+
+<a href="https://t.me/T5socialBot?start=help">Talk to me directly</a> to learn how I can be of help!
+"""
+
+WELCOME_PRIVATE = """I am the T5 Social Telegram bot!
+
+Did you know that every time you visit T5, 10% of your spend is converted into <b>Loyalty Points</b>? These can be redeemed on future visits, or even gifted to others!
+
+You can use me to check your points balance or donate points to a friend.
+
+I can also inform you about upcoming <b>Social Events</b> in the community.
+
+How can I assist you today?
+
+Made with ❤️ by <a href="tg://user?id=1698340339">Antoine</a>
+"""
 
 
 class HelpModule(BaseModule):
@@ -27,10 +44,10 @@ class HelpModule(BaseModule):
 
     async def __help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if update.effective_chat.type == ChatType.PRIVATE:
-            await update.message.reply_markdown_v2(prompts.get("welcome"), reply_markup=self.__menu_keyboard())
+            await update.message.reply_html(WELCOME_PRIVATE, reply_markup=self.__menu_keyboard())
             return
 
-        await update.message.reply_markdown_v2(prompts.get("welcome_general"))
+        await update.message.reply_html(WELCOME_PUBLIC)
 
     def __menu_keyboard(self) -> InlineKeyboardMarkup:
         menu = [module.get_menu_buttons() for module in self.menu_modules]
