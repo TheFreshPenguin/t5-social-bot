@@ -2,7 +2,6 @@ import logging
 import pytz
 from typing import Optional
 from datetime import datetime, date, time, timedelta
-import random
 
 from telegram import Update
 from telegram.constants import ParseMode
@@ -16,15 +15,13 @@ from helpers.access_checker import AccessChecker
 from helpers.points import Points
 from helpers.prompt_parser import parse
 
+from messages import birthday_congratulations
+
 from integrations.loyverse.api import LoyverseApi
 
 logger = logging.getLogger(__name__)
 
 prompts = parse("resources/birthday_prompts.txt")
-
-with open("resources/birthday_messages.txt", "r") as file:
-    birthday_messages = [line.rstrip('\n') for line in file.readlines()]
-
 
 class BirthdayModule(BaseModule):
     def __init__(self, loy: LoyverseApi, ac: AccessChecker, users: UserRepository, announcement_chats: set[int] = None, admin_chats: set[int] = None, points_to_award: Points = Points(5), timezone: Optional[pytz.timezone] = None):
@@ -81,7 +78,7 @@ class BirthdayModule(BaseModule):
 
         announcement = prompts.get('birthday_announcement').format(
             users=users_text,
-            message=random.choice(birthday_messages),
+            message=birthday_congratulations.random,
             points=self.points_to_award
         )
 

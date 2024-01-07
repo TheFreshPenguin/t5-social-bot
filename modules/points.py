@@ -1,5 +1,4 @@
 import logging
-import random
 
 from telegram import Update, InlineKeyboardButton
 from telegram.constants import ChatType
@@ -11,12 +10,11 @@ from data.repositories.user import UserRepository
 from modules.base_module import BaseModule
 from helpers.exceptions import UserFriendlyError
 
+from messages import points_balance_sarcasm
+
 from integrations.loyverse.api import LoyverseApi
 
 logger = logging.getLogger(__name__)
-
-with open("resources/points_balance_sarcasm.txt", "r") as file:
-    sarcastic_comments = [line.rstrip('\n') for line in file.readlines()]
 
 
 class PointsModule(BaseModule):
@@ -40,7 +38,7 @@ class PointsModule(BaseModule):
         try:
             user = self._validate_user(update)
             balance = self.loy.get_balance(user).to_integral()
-            sarc = random.choice(sarcastic_comments)
+            sarc = points_balance_sarcasm.random
             reply = f"{sarc} @{user.telegram_username}, you have {balance} T5 Loyalty Points!"
         except UserFriendlyError as e:
             reply = str(e)

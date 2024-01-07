@@ -1,5 +1,4 @@
 import logging
-import random
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ChatType
@@ -13,14 +12,12 @@ from helpers.access_checker import AccessChecker
 from helpers.exceptions import UserFriendlyError, CommandSyntaxError
 from helpers.points import Points
 
+from messages import donate_sarcasm
+
 from integrations.loyverse.api import LoyverseApi
 from integrations.loyverse.exceptions import InsufficientFundsError, InvalidCustomerError
 
 logger = logging.getLogger(__name__)
-
-# sarcasm
-with open("resources/donate_sarcasm.txt", "r") as file:
-    sarcastic_comments = [line.rstrip('\n') for line in file.readlines()]
 
 
 class XmasModule(BaseModule):
@@ -157,7 +154,7 @@ class XmasModule(BaseModule):
 
     @staticmethod
     def _make_donation_messages(sender: User, points: Points) -> dict[str, str]:
-        sarc = random.choice(sarcastic_comments).rstrip('\n')
+        sarc = donate_sarcasm.random
 
         return {
             "sender": f"{sarc} You donated {points} points to the Staff Xmas Pot.",

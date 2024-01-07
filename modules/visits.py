@@ -1,6 +1,5 @@
 import logging
 import pytz
-import random
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
 
@@ -20,7 +19,7 @@ from helpers.exceptions import UserFriendlyError
 from integrations.loyverse.api import LoyverseApi
 from integrations.loyverse.receipt import Receipt
 
-from messages.visits_checkpoints import visits_checkpoints
+from messages import visits_checkpoints
 
 logger = logging.getLogger(__name__)
 
@@ -145,7 +144,7 @@ class VisitsModule(BaseModule):
                 if user.telegram_id:
                     max_checkpoint = max(checkpoints.keys())
                     messages = visits_checkpoints.get(max_checkpoint, [])
-                    message = (random.choice(messages) + "\n\n") if messages else None
+                    message = (messages.random + "\n\n") if messages else None
                     announcement = f"{message}For your visits in {month.strftime('%B')} you receive {a_total_of}{total_points} points!"
                     await context.bot.send_message(user.telegram_id, announcement)
 
