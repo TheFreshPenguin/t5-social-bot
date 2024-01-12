@@ -26,32 +26,32 @@ class EventsModule(BaseModule):
 
     def install(self, application: Application) -> None:
         application.add_handlers([
-            CommandHandler("start", self.__display_events, filters.Regex('event')),
-            CommandHandler("event", self.__display_events),
-            CommandHandler("events", self.__display_events),
-            CallbackQueryHandler(self.__display_events, pattern="^events/list$"),
+            CommandHandler('start', self._display_events, filters.Regex('event')),
+            CommandHandler('event', self._display_events),
+            CommandHandler('events', self._display_events),
+            CallbackQueryHandler(self._display_events, pattern='^events/list$'),
         ])
 
         daily_time = time(0, 0, 0, 0, self.timezone)
         application.job_queue.run_daily(self._announce_advance_events, daily_time, days=(0,))
 
-        logger.info("Events module installed")
+        logger.info('Events module installed')
 
     def get_menu_buttons(self) -> list[list[InlineKeyboardButton]]:
         return [
             [InlineKeyboardButton('Upcoming Social Events', callback_data='events/list')],
         ]
 
-    async def __display_events(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def _display_events(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         # This command can only be run in private chats, except if you are a bot master
         if not (update.callback_query or update.message.chat.type == ChatType.PRIVATE) and not self.ac.is_master(update.effective_user.username):
             return
 
         try:
             now = datetime.now(self.timezone)
-            today_text = self.__format_today(now)
-            upcoming_text = self.__format_upcoming(now, self.upcoming_days)
-            reply = self.__merge_texts(today_text, upcoming_text)
+            today_text = self._format_today(now)
+            upcoming_text = self._format_upcoming(now, self.upcoming_days)
+            reply = self._merge_texts(today_text, upcoming_text)
         except UserFriendlyError as e:
             reply = str(e)
         except Exception as e:
@@ -65,13 +65,13 @@ class EventsModule(BaseModule):
             await update.message.reply_html(reply)
 
     @staticmethod
-    def __merge_texts(today: str, upcoming: str) -> str:
+    def _merge_texts(today: str, upcoming: str) -> str:
         if today and upcoming:
-            return today + "\n\n" + "<b>Upcoming Events</b>:\n\n" + upcoming
+            return f"{today}\n\n<b>Upcoming Events:</b>\n\n{upcoming}"
         elif today:
             return today
         elif upcoming:
-            return "There are no events today, but here are some <b>Upcoming Events</b>:\n\n" + upcoming
+            return f"There are no events today, but here are some <b>Upcoming Events</b>:\n\n{upcoming}"
         else:
             return "Sadly, Mici has eaten all our hosts so there are no events happening any time soon."
 
@@ -79,7 +79,7 @@ class EventsModule(BaseModule):
         if not self.admin_chats:
             return
 
-        upcoming_text = self.__format_upcoming(datetime.now(self.timezone), self.upcoming_days + 1)
+        upcoming_text = self._format_upcoming(datetime.now(self.timezone), self.upcoming_days + 1)
 
         if upcoming_text:
             announcement = f"<b>Upcoming Events:</b>\n\n{upcoming_text}\n\nDoes this look right?"
@@ -89,7 +89,7 @@ class EventsModule(BaseModule):
         for chat_id in self.admin_chats:
             await context.bot.send_message(chat_id, announcement, parse_mode=ParseMode.HTML)
 
-    def __format_today(self, now: datetime) -> str:
+    def _format_today(self, now: datetime) -> str:
         events = self.repository.get_events_on(now)
         events = [e for e in events if e.end_date > now]
 
@@ -97,17 +97,17 @@ class EventsModule(BaseModule):
             return ""
 
         main_event = events[-1]
-        main_text = EventsModule.__main_event(main_event, now)
+        main_text = EventsModule._main_event(main_event, now)
         today_text = f"<b>Tonight's Event:</b>\n\n{main_text}"
 
         if len(events) > 1:
             secondary_events = events[0:-1]
-            secondary_text = "\n".join([EventsModule.__upcoming_event(e, now) for e in secondary_events])
+            secondary_text = "\n".join([EventsModule._upcoming_event(e, now) for e in secondary_events])
             today_text += f"\n\n<b>Also Happening:</b>\n\n{secondary_text}"
 
         return today_text
 
-    def __format_upcoming(self, now: datetime, upcoming_days: int) -> str:
+    def _format_upcoming(self, now: datetime, upcoming_days: int) -> str:
         upcoming_texts = []
         for date in (now + timedelta(n + 1) for n in range(upcoming_days)):
             date_events = self.repository.get_events_on(date)
@@ -115,28 +115,28 @@ class EventsModule(BaseModule):
                 continue
 
             date_heading = date.strftime('%A, %d %B').replace(' 0', ' ')
-            date_texts = [EventsModule.__upcoming_event(e) for e in date_events]
+            date_texts = [EventsModule._upcoming_event(e) for e in date_events]
 
             upcoming_texts.append(date_heading + "\n" + "\n".join(date_texts))
 
         return "\n\n".join(upcoming_texts)
 
     @staticmethod
-    def __main_event(e: Event, now: datetime) -> str:
+    def _main_event(e: Event, now: datetime) -> str:
         return (
-            f"{e.name} @ {EventsModule.__event_time(e.start_date, now)}"
+            f"{e.name} @ {EventsModule._event_time(e.start_date, now)}"
             + (f"\nHosted by {e.host}" if e.host else "")
             + (f"\n{e.description}" if e.description else "")
         )
 
     @staticmethod
-    def __upcoming_event(e: Event, now: Optional[datetime] = None) -> str:
-        return f"{e.name} | {EventsModule.__event_time(e.start_date, now)}" + (f" | {e.host}" if e.host else "")
+    def _upcoming_event(e: Event, now: Optional[datetime] = None) -> str:
+        return f"{e.name} | {EventsModule._event_time(e.start_date, now)}" + (f" | {e.host}" if e.host else "")
 
     @staticmethod
-    def __event_time(date: datetime, now: Optional[datetime] = None) -> str:
+    def _event_time(date: datetime, now: Optional[datetime] = None) -> str:
         return "<b>RIGHT NOW</b>" if (now and date < now) else date.strftime('%I:%M%p').lstrip('0').replace(':00', '').lower()
 
     @staticmethod
-    def __enumerate(lst: list[str]) -> str:
+    def _enumerate(lst: list[str]) -> str:
         return (', '.join(lst[:-1]) + ' and ' + lst[-1]) if len(lst) > 1 else lst[0]
