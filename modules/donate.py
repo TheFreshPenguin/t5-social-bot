@@ -1,5 +1,4 @@
 import logging
-import random
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ChatType
@@ -13,14 +12,12 @@ from helpers.access_checker import AccessChecker
 from helpers.exceptions import UserFriendlyError, CommandSyntaxError
 from helpers.points import Points
 
+from messages import donate_sarcasm
+
 from integrations.loyverse.api import LoyverseApi
 from integrations.loyverse.exceptions import InsufficientFundsError, InvalidCustomerError
 
 logger = logging.getLogger(__name__)
-
-# sarcasm
-with open("resources/donate_sarcasm.txt", "r") as file:
-    sarcastic_comments = [line.rstrip('\n') for line in file.readlines()]
 
 
 class DonateModule(BaseModule):
@@ -66,7 +63,7 @@ class DonateModule(BaseModule):
             if update.message.chat.type == ChatType.PRIVATE:
                 if recipient:
                     await update.message.reply_text(
-                        f"You are about to donate {points} to {DonateModule._search_name(recipient)}. Are you sure?",
+                        f"You are about to donate {points} point{points.plural} to {recipient.specific_name}. Are you sure?",
                         reply_markup=DonateModule._confirm_keyboard(recipient, points)
                     )
                 else:
@@ -176,7 +173,7 @@ class DonateModule(BaseModule):
 
     def _validate_points(self, raw_points: str) -> Points:
         points = Points(raw_points)
-        if not points.is_positive():
+        if not points.is_positive:
             raise UserFriendlyError("Your sense of charity is as high as the amount of points you tried to donate - donations have to be greater than zero.")
 
         return points
@@ -232,18 +229,18 @@ class DonateModule(BaseModule):
         try:
             self.loy.add_points(recipient, points)
         except InvalidCustomerError as error:
-            raise UserFriendlyError(f"{DonateModule._message_name(recipient)} does not have a bar tab as a Community Champion. You should ask Rob to make one for them.") from error
+            raise UserFriendlyError(f"{recipient.friendly_name} does not have a bar tab as a Community Champion. You should ask Rob to make one for them.") from error
         except Exception as error:
             raise UserFriendlyError("The donation has failed - perhaps the stars were not right? You can try again later.") from error
 
     @staticmethod
     def _make_donation_messages(sender: User, recipient: User, points: Points) -> dict[str, str]:
-        sarc = random.choice(sarcastic_comments).rstrip('\n')
+        sarc = donate_sarcasm.random
 
         return {
-            "sender": f"{sarc} You donated {points} points to {DonateModule._message_name(recipient)}.",
-            "recipient": f"{DonateModule._message_name(sender)} donated {points} to you!",
-            "announcement": f"{sarc} {DonateModule._message_name(sender)} donated {points} points to {DonateModule._message_name(recipient)}.",
+            "sender": f"{sarc} You donated {points} point{points.plural} to {recipient.friendly_name}.",
+            "recipient": f"{sender.friendly_name} donated {points} point{points.plural} to you!",
+            "announcement": f"{sarc} {sender.friendly_name} donated {points} point{points.plural} to {recipient.friendly_name}.",
         }
 
     @staticmethod
@@ -266,20 +263,10 @@ class DonateModule(BaseModule):
     @staticmethod
     def _confirm_button(user: User, points, text: str = '') -> InlineKeyboardButton:
         return InlineKeyboardButton(
-            text or DonateModule._search_name(user),
+            text or user.specific_name,
             callback_data=f"donate/confirm/{user.telegram_username}/{points}"
         )
 
     @staticmethod
     def _cancel_button(text: str = 'Cancel') -> InlineKeyboardButton:
         return InlineKeyboardButton(text, callback_data=f"donate/cancel")
-
-    @staticmethod
-    def _message_name(user: User) -> str:
-        name = user.main_alias or user.first_name
-        return f"{name} / @{user.telegram_username}"
-
-    @staticmethod
-    def _search_name(user: User) -> str:
-        name = user.main_alias or user.full_name
-        return f"{name} / @{user.telegram_username}"

@@ -1,5 +1,4 @@
 import logging
-import random
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ChatType
@@ -13,14 +12,12 @@ from helpers.access_checker import AccessChecker
 from helpers.exceptions import UserFriendlyError, CommandSyntaxError
 from helpers.points import Points
 
+from messages import donate_sarcasm
+
 from integrations.loyverse.api import LoyverseApi
 from integrations.loyverse.exceptions import InsufficientFundsError, InvalidCustomerError
 
 logger = logging.getLogger(__name__)
-
-# sarcasm
-with open("resources/donate_sarcasm.txt", "r") as file:
-    sarcastic_comments = [line.rstrip('\n') for line in file.readlines()]
 
 
 class XmasModule(BaseModule):
@@ -63,7 +60,7 @@ class XmasModule(BaseModule):
 
             if update.message.chat.type == ChatType.PRIVATE:
                 await update.message.reply_text(
-                    f"You are about to donate {points} to the Staff Xmas Pot. Are you sure?",
+                    f"You are about to donate {points} point{points.plural} to the Staff Xmas Pot. Are you sure?",
                     reply_markup=XmasModule._confirm_keyboard(points)
                 )
                 return
@@ -121,7 +118,7 @@ class XmasModule(BaseModule):
 
     def _validate_points(self, raw_points: str) -> Points:
         points = Points(raw_points)
-        if not points.is_positive():
+        if not points.is_positive:
             raise UserFriendlyError("Your sense of charity is as high as the amount of points you tried to donate - donations have to be greater than zero.")
 
         return points
@@ -157,11 +154,11 @@ class XmasModule(BaseModule):
 
     @staticmethod
     def _make_donation_messages(sender: User, points: Points) -> dict[str, str]:
-        sarc = random.choice(sarcastic_comments).rstrip('\n')
+        sarc = donate_sarcasm.random
 
         return {
-            "sender": f"{sarc} You donated {points} points to the Staff Xmas Pot.",
-            "announcement": f"{sarc} {XmasModule._message_name(sender)} donated {points} points to the Staff Xmas Pot.",
+            "sender": f"{sarc} You donated {points} point{points.plural} to the Staff Xmas Pot.",
+            "announcement": f"{sarc} {sender.friendly_name} donated {points} point{points.plural} to the Staff Xmas Pot.",
         }
 
     @staticmethod
@@ -180,8 +177,3 @@ class XmasModule(BaseModule):
     @staticmethod
     def _cancel_button(text: str = 'Cancel') -> InlineKeyboardButton:
         return InlineKeyboardButton(text, callback_data=f"xmas/cancel")
-
-    @staticmethod
-    def _message_name(user: User) -> str:
-        name = user.main_alias or user.first_name
-        return f"{name} / @{user.telegram_username}"

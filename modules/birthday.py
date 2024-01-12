@@ -2,7 +2,6 @@ import logging
 import pytz
 from typing import Optional
 from datetime import datetime, date, time, timedelta
-import random
 
 from telegram import Update
 from telegram.constants import ParseMode
@@ -14,17 +13,19 @@ from data.repositories.user import UserRepository
 from modules.base_module import BaseModule
 from helpers.access_checker import AccessChecker
 from helpers.points import Points
-from helpers.prompt_parser import parse
+
+from messages import birthday_congratulations
 
 from integrations.loyverse.api import LoyverseApi
 
 logger = logging.getLogger(__name__)
 
-prompts = parse("resources/birthday_prompts.txt")
+BIRTHDAY_ANNOUNCEMENT = """La Mulți Ani {users} 🎉
 
-with open("resources/birthday_messages.txt", "r") as file:
-    birthday_messages = [line.rstrip('\n') for line in file.readlines()]
+{message}
 
+Enjoy {points} Loyalty Points from T5 🎁
+"""
 
 class BirthdayModule(BaseModule):
     def __init__(self, loy: LoyverseApi, ac: AccessChecker, users: UserRepository, announcement_chats: set[int] = None, admin_chats: set[int] = None, points_to_award: Points = Points(5), timezone: Optional[pytz.timezone] = None):
@@ -77,11 +78,11 @@ class BirthdayModule(BaseModule):
         if not users:
             return
 
-        users_text = BirthdayModule._enumerate([BirthdayModule._message_name(user) for user in users])
+        users_text = BirthdayModule._enumerate([user.friendly_name for user in users])
 
-        announcement = prompts.get('birthday_announcement').format(
+        announcement = BIRTHDAY_ANNOUNCEMENT.format(
             users=users_text,
-            message=random.choice(birthday_messages),
+            message=birthday_congratulations.random,
             points=self.points_to_award
         )
 
@@ -126,15 +127,10 @@ class BirthdayModule(BaseModule):
     def _format_birthday_list(heading: str, birthdays: dict[date, list[User]]) -> str:
         message_parts = [f"<b>{heading}:</b>"]
         for day, users in birthdays.items():
-            users_text = BirthdayModule._enumerate([BirthdayModule._message_name(user) for user in users])
+            users_text = BirthdayModule._enumerate([user.friendly_name for user in users])
             message_parts.append(f"{day.strftime('%A, %d %B')} - {users_text}")
 
         return "\n".join(message_parts)
-
-    @staticmethod
-    def _message_name(user: User) -> str:
-        name = user.main_alias or user.first_name
-        return f"{name} / @{user.telegram_username}"
 
     @staticmethod
     def _enumerate(lst: list[str]) -> str:

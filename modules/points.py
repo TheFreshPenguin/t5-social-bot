@@ -1,5 +1,4 @@
 import logging
-import random
 
 from telegram import Update, InlineKeyboardButton
 from telegram.constants import ChatType
@@ -11,12 +10,11 @@ from data.repositories.user import UserRepository
 from modules.base_module import BaseModule
 from helpers.exceptions import UserFriendlyError
 
+from messages import points_balance_sarcasm
+
 from integrations.loyverse.api import LoyverseApi
 
 logger = logging.getLogger(__name__)
-
-with open("resources/points_balance_sarcasm.txt", "r") as file:
-    sarcastic_comments = [line.rstrip('\n') for line in file.readlines()]
 
 
 class PointsModule(BaseModule):
@@ -40,22 +38,26 @@ class PointsModule(BaseModule):
         try:
             user = self._validate_user(update)
             balance = self.loy.get_balance(user).to_integral()
-            sarc = random.choice(sarcastic_comments)
-            reply = f"{sarc} @{user.telegram_username}, you have {balance} T5 Loyalty Points!"
+            sarc = points_balance_sarcasm.random
+
+            if update.effective_chat.type == ChatType.PRIVATE:
+                reply = f"{sarc}\n\nYou have {balance} T5 Loyalty Point{balance.plural}!"
+            else:
+                reply = (
+                    f"{sarc} {user.main_alias or user.first_name}, you have {balance} T5 Loyalty Point{balance.plural}!\n\n" +
+                    'You can also <a href="https://t.me/T5socialBot?start=help">talk to me directly</a> to check your points!'
+                )
         except UserFriendlyError as e:
             reply = str(e)
         except Exception as e:
             logger.exception(e)
             reply = f"BeeDeeBeeBoop 🤖 Error : {e}"
 
-        if update.effective_chat.type != ChatType.PRIVATE:
-            reply += "\n\n" + 'You can also <a href="https://t.me/T5socialBot?start=help">talk to me directly</a> to check your points!'
-
         if update.callback_query:
             await update.callback_query.answer()
-            await update.callback_query.edit_message_text(reply)
+            await update.callback_query.edit_message_text(reply, disable_web_page_preview=True)
         else:
-            await update.message.reply_html(reply)
+            await update.message.reply_html(reply, disable_web_page_preview=True)
 
     def _validate_user(self, update: Update) -> User:
         sender_name = update.effective_user.username

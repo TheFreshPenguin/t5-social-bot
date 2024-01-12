@@ -27,6 +27,16 @@ class User:
     def main_alias(self) -> Optional[str]:
         return self.aliases[0] if self.aliases else None
 
+    @property
+    def friendly_name(self) -> str:
+        name = self.main_alias or self.first_name
+        return f"{name} / @{self.telegram_username}"
+
+    @property
+    def specific_name(self) -> str:
+        name = self.main_alias or self.full_name
+        return f"{name} / @{self.telegram_username}"
+
     def __eq__(self, other):
         return self.full_name == other.full_name
 

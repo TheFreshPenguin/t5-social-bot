@@ -1,6 +1,5 @@
 import logging
 import pytz
-import random
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
 
@@ -20,7 +19,7 @@ from helpers.exceptions import UserFriendlyError
 from integrations.loyverse.api import LoyverseApi
 from integrations.loyverse.receipt import Receipt
 
-from messages.visits_checkpoints import visits_checkpoints
+from messages import visits_checkpoints
 
 logger = logging.getLogger(__name__)
 
@@ -90,13 +89,13 @@ class VisitsModule(BaseModule):
             reply = f"BeeDeeBeeBoop 🤖 Error : {e}"
 
         if update.effective_chat.type != ChatType.PRIVATE:
-            reply += "\n\n" + 'You can also <a href="https://t.me/T5socialBot?start=help">talk to me directly</a> to check your points!'
+            reply += "\n\n" + 'You can also <a href="https://t.me/T5socialBot?start=help">talk to me directly</a> to check your visits!'
 
         if update.callback_query:
             await update.callback_query.answer()
-            await update.callback_query.edit_message_text(reply)
+            await update.callback_query.edit_message_text(reply, disable_web_page_preview=True)
         else:
-            await update.message.reply_html(reply)
+            await update.message.reply_html(reply, disable_web_page_preview=True)
 
     async def _update_visits(self, context: ContextTypes.DEFAULT_TYPE) -> None:
         # This function may take several seconds to run, so it's important that we sample the time at the start
@@ -110,7 +109,7 @@ class VisitsModule(BaseModule):
         self.users.save_all(list(updates.keys()))
 
         # Send messages to users about the points they received
-        await self._send_messages(updates, context)
+        await self._send_messages(updates, right_now, context)
 
         # Remember when we last retrieved new information
         self.last_check = right_now
@@ -133,20 +132,21 @@ class VisitsModule(BaseModule):
 
         return user, receipt.created_at
 
-    async def _send_messages(self, updates: dict[User, ReachedCheckpoints], context: ContextTypes.DEFAULT_TYPE):
+    async def _send_messages(self, updates: dict[User, ReachedCheckpoints], right_now: datetime, context: ContextTypes.DEFAULT_TYPE):
         updates_with_points = {user: points for user, points in updates.items() if points and VisitsModule._can_earn_points(user)}
         for user, month_checkpoints in updates_with_points.items():
             for month, checkpoints in month_checkpoints.items():
                 total_points = sum(checkpoints.values(), start=Points(0))
                 a_total_of = 'a total of ' if len(checkpoints) > 1 else ''
                 self.loy.add_points(user, total_points)
-                print(f"{user.full_name} receives {a_total_of}{total_points} points for visits in {month.strftime('%B')}")
+                print(f"{user.full_name} receives {a_total_of}{total_points} point{total_points.plural} for visits in {month.strftime('%B')}")
 
                 if user.telegram_id:
                     max_checkpoint = max(checkpoints.keys())
                     messages = visits_checkpoints.get(max_checkpoint, [])
-                    message = (random.choice(messages) + "\n\n") if messages else None
-                    announcement = f"{message}For your visits in {month.strftime('%B')} you receive {a_total_of}{total_points} points!"
+                    message = (messages.random + "\n\n") if messages else None
+                    month_text = 'this month' if month.month == right_now.month else f"in {month.strftime('%B')}"
+                    announcement = f"{message}Because you visited us on {max_checkpoint} occasions {month_text}, we want to thank you for your persistence with {a_total_of}{total_points} point{total_points.plural}!"
                     await context.bot.send_message(user.telegram_id, announcement)
 
     def _validate_user(self, update: Update) -> User:
