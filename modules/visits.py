@@ -109,7 +109,7 @@ class VisitsModule(BaseModule):
         self.users.save_all(list(updates.keys()))
 
         # Send messages to users about the points they received
-        await self._send_messages(updates, context)
+        await self._send_messages(updates, right_now, context)
 
         # Remember when we last retrieved new information
         self.last_check = right_now
@@ -132,7 +132,7 @@ class VisitsModule(BaseModule):
 
         return user, receipt.created_at
 
-    async def _send_messages(self, updates: dict[User, ReachedCheckpoints], context: ContextTypes.DEFAULT_TYPE):
+    async def _send_messages(self, updates: dict[User, ReachedCheckpoints], right_now: datetime, context: ContextTypes.DEFAULT_TYPE):
         updates_with_points = {user: points for user, points in updates.items() if points and VisitsModule._can_earn_points(user)}
         for user, month_checkpoints in updates_with_points.items():
             for month, checkpoints in month_checkpoints.items():
@@ -145,7 +145,8 @@ class VisitsModule(BaseModule):
                     max_checkpoint = max(checkpoints.keys())
                     messages = visits_checkpoints.get(max_checkpoint, [])
                     message = (messages.random + "\n\n") if messages else None
-                    announcement = f"{message}For your visits in {month.strftime('%B')} you receive {a_total_of}{total_points} point{total_points.plural}!"
+                    month_text = 'this month' if month.month == right_now.month else f"in {month.strftime('%B')}"
+                    announcement = f"{message}Because you visited us on {max_checkpoint} occasions {month_text}, we want to thank you for your persistence with {a_total_of}{total_points} point{total_points.plural}!"
                     await context.bot.send_message(user.telegram_id, announcement)
 
     def _validate_user(self, update: Update) -> User:
