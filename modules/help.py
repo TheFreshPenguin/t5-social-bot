@@ -17,7 +17,7 @@ I am the T5 Social Telegram bot!
 
 WELCOME_PRIVATE = """I am the T5 Social Telegram bot!
 
-Did you know that every time you visit T5, 10% of your spend is converted into <b>Loyalty Points</b>? These can be redeemed on future visits, or even gifted to others!
+Did you know that every time you visit T5, 5% of your spend is converted into <b>Loyalty Points</b>? These can be redeemed on future visits, or even gifted to others!
 
 You can use me to check your points balance or donate points to a friend.
 
