@@ -83,7 +83,7 @@ def main() -> None:
             points_to_award=config.birthday_points,
             timezone=config.timezone,
         ),
-        EventsModule(repository=event_repository, timezone=config.timezone, ac=ac),
+        EventsModule(repository=event_repository, timezone=config.timezone, ac=ac, admin_chats=config.admin_chats),
         TrackingModule(users=user_repository, timezone=config.timezone),
     ]
 

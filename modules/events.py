@@ -1,5 +1,5 @@
 import pytz
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 import logging
 from typing import Optional
 
@@ -17,11 +17,12 @@ logger = logging.getLogger(__name__)
 
 
 class EventsModule(BaseModule):
-    def __init__(self, ac: AccessChecker, repository: EventRepository, timezone: pytz.timezone = None, upcoming_days: int = 6):
+    def __init__(self, ac: AccessChecker, repository: EventRepository, timezone: pytz.timezone = None, upcoming_days: int = 6, admin_chats: set[int] = None):
         self.ac = ac
         self.repository = repository
         self.timezone = timezone
         self.upcoming_days = upcoming_days
+        self.admin_chats: set[int] = (admin_chats or set()).copy()
 
     def install(self, application: Application) -> None:
         application.add_handlers([
@@ -30,6 +31,10 @@ class EventsModule(BaseModule):
             CommandHandler("events", self.__display_events),
             CallbackQueryHandler(self.__display_events, pattern="^events/list$"),
         ])
+
+        daily_time = time(0, 0, 0, 0, self.timezone)
+        application.job_queue.run_daily(self._announce_advance_events, daily_time, days=(0,))
+
         logger.info("Events module installed")
 
     def get_menu_buttons(self) -> list[list[InlineKeyboardButton]]:
@@ -69,6 +74,20 @@ class EventsModule(BaseModule):
             return "There are no events today, but here are some <b>Upcoming Events</b>:\n\n" + upcoming
         else:
             return "Sadly, Mici has eaten all our hosts so there are no events happening any time soon."
+
+    async def _announce_advance_events(self, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not self.admin_chats:
+            return
+
+        upcoming_text = self.__format_upcoming(datetime.now(self.timezone), self.upcoming_days + 1)
+
+        if upcoming_text:
+            announcement = f"<b>Upcoming Events:</b>\n\n{upcoming_text}\n\nDoes this look right?"
+        else:
+            announcement = f"⚠️ There are no upcoming events in the next {self.upcoming_days + 1} days. Remember to add some in the Google sheet! ⚠️"
+
+        for chat_id in self.admin_chats:
+            await context.bot.send_message(chat_id, announcement, parse_mode=ParseMode.HTML)
 
     def __format_today(self, now: datetime) -> str:
         events = self.repository.get_events_on(now)
