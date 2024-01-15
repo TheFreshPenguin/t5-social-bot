@@ -102,6 +102,9 @@ class LoyverseApi:
         return Customer.from_json(response.json())
 
     def _initialize_customer(self, user: User) -> Optional[Customer]:
+        if not user.telegram_username:
+            return None
+
         customers = self._get_all_customers()
         customer = customers.get(user.telegram_username)
         if not customer:
