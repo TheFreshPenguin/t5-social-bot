@@ -30,12 +30,12 @@ class User:
     @property
     def friendly_name(self) -> str:
         name = self.main_alias or self.first_name
-        return f"{name} / @{self.telegram_username}"
+        return name + (f" / @{self.telegram_username}" if self.telegram_username else "")
 
     @property
     def specific_name(self) -> str:
         name = self.main_alias or self.full_name
-        return f"{name} / @{self.telegram_username}"
+        return name + (f" / @{self.telegram_username}" if self.telegram_username else "")
 
     def __eq__(self, other):
         return self.full_name == other.full_name

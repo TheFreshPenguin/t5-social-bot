@@ -112,7 +112,7 @@ class GoogleSheetUserRepository(UserRepository):
 
             self.users_search = {}
             # Complete telegram username
-            self._add_to_search({handle.inner.telegram_username.lower(): handle for handle in self.users})
+            self._add_to_search({handle.inner.telegram_username.lower(): handle for handle in self.users if handle.inner.telegram_username})
             for handle in self.users:
                 # Complete alias list
                 self._add_to_search({alias.lower(): handle for alias in handle.inner.aliases})
