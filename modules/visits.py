@@ -102,7 +102,7 @@ class VisitsModule(BaseModule):
         right_now = datetime.now(self.timezone)
 
         # Load fresh visits that came in since the last time we checked
-        raw_visits = self.load_visits(self.last_check)
+        raw_visits = self._load_visits(self.last_check)
         updates = self.vc.add_visits(raw_visits, right_now)
 
         # Save the resulting user data to the repository
@@ -114,9 +114,7 @@ class VisitsModule(BaseModule):
         # Remember when we last retrieved new information
         self.last_check = right_now
 
-    def load_visits(self, since: datetime) -> list[Tuple[User, datetime]]:
-        since = since.replace(tzinfo=self.timezone)
-
+    def _load_visits(self, since: datetime) -> list[Tuple[User, datetime]]:
         # Load the receipts and convert them into visits (User + creation date)
         receipts = self.loy.get_receipts(since)
         raw_visits = [self._receipt_to_visit(receipt) for receipt in receipts]
