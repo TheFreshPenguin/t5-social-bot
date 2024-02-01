@@ -78,12 +78,15 @@ class LoyverseApi:
             if not cursor or len(raw_receipts) < limit:
                 break
 
+    def get_user_by_customer_id(self, customer_id: str) -> Optional[User]:
+        user = self.users.get_by_loyverse_id(customer_id)
+        return user if user else self._initialize_user_by_customer(customer_id)
 
     def _get_customer(self, user: User) -> Customer:
         customer = self._get_single_customer(user.loyverse_id) if user.loyverse_id else None
 
         if not customer:
-            customer = self._initialize_customer(user)
+            customer = self._initialize_customer_by_user(user)
 
         if not customer:
             raise InvalidCustomerError(f"The user @{user.telegram_username} is not a recognized Loyverse customer.")
@@ -101,7 +104,7 @@ class LoyverseApi:
 
         return Customer.from_json(response.json())
 
-    def _initialize_customer(self, user: User) -> Optional[Customer]:
+    def _initialize_customer_by_user(self, user: User) -> Optional[Customer]:
         if not user.telegram_username:
             return None
 
@@ -110,11 +113,29 @@ class LoyverseApi:
         if not customer:
             return None
 
+        self._link_user_to_customer(user, customer)
+
+        return customer
+
+    def _initialize_user_by_customer(self, customer_id: str) -> Optional[User]:
+        customer = self._get_single_customer(customer_id)
+        if not customer:
+            return None
+
+        if not customer.username:
+            return None
+
+        user = self.users.get_by_telegram_name(customer.username)
+        if not user:
+            return None
+
+        return self._link_user_to_customer(user, customer)
+
+    def _link_user_to_customer(self, user: User, customer: Customer) -> User:
         # Save the customer id to the user data for future reference
         user = user.copy(loyverse_id=customer.customer_id)
         self.users.save(user)
-
-        return customer
+        return user
 
     def _get_all_customers(self) -> dict[str, Customer]:
         response = requests.get(self.READ_ALL_CUSTOMERS_ENDPOINT, headers={
