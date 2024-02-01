@@ -99,9 +99,10 @@ class GoogleSheetUserRepository(UserRepository):
 
     def _load(self, raw_data: list[dict[str, str]]) -> None:
         with self.lock.gen_wlock():
-            self.users = [UserHandle(self._from_row(row)) for row in raw_data]
+            raw_users = [self._from_row(row) for row in raw_data]
+            self.users = [UserHandle(user) for user in raw_users if user]
 
-            self.users_by_full_name = {handle.inner.full_name: handle for handle in self.users if handle.inner.full_name}
+            self.users_by_full_name = {handle.inner.full_name: handle for handle in self.users if handle.inner}
             self.users_by_telegram_id = {handle.inner.telegram_id: handle for handle in self.users if handle.inner.telegram_id}
             self.users_by_telegram_name = {handle.inner.telegram_username: handle for handle in self.users if handle.inner.telegram_username}
             self.users_by_loyverse_id = {handle.inner.loyverse_id: handle for handle in self.users if handle.inner.loyverse_id}
@@ -119,7 +120,7 @@ class GoogleSheetUserRepository(UserRepository):
                 # First name from full name
                 self._add_to_search({handle.inner.first_name.lower(): handle})
             # Complete full name
-            self._add_to_search({handle.inner.full_name.lower(): handle for handle in self.users if handle.inner.full_name})
+            self._add_to_search({handle.inner.full_name.lower(): handle for handle in self.users if handle.inner})
 
             self._merge_search_prefixes()
 
@@ -149,9 +150,14 @@ class GoogleSheetUserRepository(UserRepository):
             else:
                 self.users_search[key] = {user}
 
-    def _from_row(self, row: dict[str, str]) -> User:
+    def _from_row(self, row: dict[str, str]) -> Optional[User]:
+        # The full name is required, because we use it for saving
+        full_name = row.get('full_name', '').strip()
+        if not full_name:
+            return None
+
         return User(
-            full_name=row.get('full_name', '').strip(),
+            full_name=full_name,
             aliases=GoogleSheetUserRepository._parse_aliases(row.get('aliases', '')),
             role=GoogleSheetUserRepository._parse_user_role(row.get('role', '')),
             telegram_username=row.get('telegram_username', '').strip(),
