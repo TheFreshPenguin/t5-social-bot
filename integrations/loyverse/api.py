@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 class LoyverseApi:
     BASE_URL = "https://api.loyverse.com/v1.0"
     CUSTOMERS_ENDPOINT = f"{BASE_URL}/customers"
-    READ_ALL_CUSTOMERS_ENDPOINT = f"{CUSTOMERS_ENDPOINT}?updated_at_min=2023-07-01T12:30:00.000Z&limit=250"
     RECEIPTS_ENDPOINT = f"{BASE_URL}/receipts"
 
     def __init__(self, token: str, users: UserRepository, read_only: bool = False):
@@ -59,7 +58,7 @@ class LoyverseApi:
         # Emulate do-while
         while True:
             response = requests.get(
-                f"{self.RECEIPTS_ENDPOINT}",
+                url=self.RECEIPTS_ENDPOINT,
                 params={'created_at_min': since_utc, 'limit': limit, 'cursor': cursor},
                 headers={"Authorization": f"Bearer {self.token}"}
             )
@@ -104,12 +103,17 @@ class LoyverseApi:
 
         return Customer.from_json(response.json())
 
+    def _get_single_customer_by_username(self, username: str) -> Optional[Customer]:
+        for customer in self._get_all_customers():
+            if customer.username == username:
+                return customer
+        return None
+
     def _initialize_customer_by_user(self, user: User) -> Optional[Customer]:
         if not user.telegram_username:
             return None
 
-        customers = self._get_all_customers()
-        customer = customers.get(user.telegram_username)
+        customer = self._get_single_customer_by_username(user.telegram_username)
         if not customer:
             return None
 
@@ -137,17 +141,33 @@ class LoyverseApi:
         self.users.save(user)
         return user
 
-    def _get_all_customers(self) -> dict[str, Customer]:
-        response = requests.get(self.READ_ALL_CUSTOMERS_ENDPOINT, headers={
-            "Authorization": f"Bearer {self.token}"
-        })
+    def _get_all_customers(self) -> Generator[Customer, None, None]:
+        limit = 250
+        cursor = None
 
-        if response.status_code != 200:
-            logger.error(f"Loyverse get_all_customers error {response.status_code} occurred.")
-            return dict()
+        # Emulate do-while
+        while True:
+            response = requests.get(
+                url=self.CUSTOMERS_ENDPOINT,
+                params={'limit': limit, 'cursor': cursor},
+                headers={"Authorization": f"Bearer {self.token}"},
+            )
 
-        customers = [Customer.from_json(c) for c in response.json().get('customers')]
-        return {c.username: c for c in customers if c}
+            if response.status_code != 200:
+                logger.error(f"Loyverse get_all_customers error {response.status_code} occurred.")
+                break
+
+            response_data = response.json()
+            raw_customers = response_data.get('customers', [])
+            cursor = response_data.get('cursor')
+
+            for raw_customer in raw_customers:
+                customer = Customer.from_json(raw_customer)
+                if customer:
+                    yield customer
+
+            if not cursor or len(raw_customers) < limit:
+                break
 
     def _save_customer(self, customer: Customer) -> None:
         data = json.dumps(customer, default=helpers.json.default)
