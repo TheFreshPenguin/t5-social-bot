@@ -124,7 +124,7 @@ class VisitsModule(BaseModule):
         if not receipt.customer_id:
             return None
 
-        user = self.users.get_by_loyverse_id(receipt.customer_id)
+        user = self.loy.get_user_by_customer_id(receipt.customer_id)
         if not user:
             return None
 

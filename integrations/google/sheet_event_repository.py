@@ -1,7 +1,7 @@
 import pytz
 
 from datetime import date, datetime, timedelta
-from typing import Union
+from typing import Union, Optional
 from itertools import groupby
 
 from readerwriterlock import rwlock
@@ -39,7 +39,8 @@ class GoogleSheetEventRepository(EventRepository):
 
     def _load(self, raw_data: list) -> None:
         with self.lock.gen_wlock():
-            self.events = [EventHandle(self._from_row(row)) for row in raw_data]
+            raw_events = [self._from_row(row) for row in raw_data]
+            self.events = [EventHandle(event) for event in raw_events if event]
 
             self.events.sort(key=lambda handle: handle.inner.start_date)
             grouped_events = groupby(self.events, key=lambda handle: handle.inner.start_date.date())
@@ -50,14 +51,26 @@ class GoogleSheetEventRepository(EventRepository):
                 main_event = events[-1]
                 main_event.inner = main_event.inner.copy(end_date=main_event.inner.start_date + timedelta(hours=3))
 
-    def _from_row(self, row: dict[str, str]) -> Event:
+    def _from_row(self, row: dict[str, str]) -> Optional[Event]:
+        # The event name and start date are required
+        name = row.get('event', '').strip()
+        if not name:
+            return None
+
+        start_date = self.__parse_datetime(row.get('date', '').strip(), row.get('time', '').strip())
+        if not start_date:
+            return None
+
         return Event(
-            name=row.get('event', '').strip(),
-            start_date=self.__parse_datetime(row.get('date', '').strip(), row.get('time', '').strip()),
+            name=name,
+            start_date=start_date,
             host=row.get('host', '').strip(),
             description=row.get('description', '').strip(),
         )
 
-    def __parse_datetime(self, date_string: str, time_string: str) -> datetime:
-        full_string = date_string + ' ' + (time_string or '19:00')
-        return self.timezone.localize(datetime.strptime(full_string, '%Y-%m-%d %H:%M'))
+    def __parse_datetime(self, date_string: str, time_string: str) -> Optional[datetime]:
+        try:
+            full_string = date_string + ' ' + (time_string or '19:00')
+            return self.timezone.localize(datetime.strptime(full_string, '%Y-%m-%d %H:%M'))
+        except ValueError:
+            return None
