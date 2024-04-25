@@ -9,7 +9,7 @@ class ChatTarget:
 
     @staticmethod
     def parse(raw: str) -> 'ChatTarget':
-        tokens = [token for token in raw.strip().split('/') if token]
+        tokens = [token for token in raw.strip().split('_') if token]
         if len(tokens) < 1:
             raise ValueError('Invalid chat target format')
 
