@@ -69,7 +69,7 @@ class XmasModule(BaseModule):
 
             messages = XmasModule._make_donation_messages(sender, points)
 
-            await update.message.reply_text(messages['announcement'], quote=False)
+            await update.message.reply_text(messages['announcement'], do_quote=False)
         except CommandSyntaxError:
             await update.message.reply_text(self.SYNTAX_HELP_TEXT)
         except UserFriendlyError as e:

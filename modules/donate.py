@@ -83,7 +83,7 @@ class DonateModule(BaseModule):
 
             messages = DonateModule._make_donation_messages(sender, recipient, points)
 
-            await update.message.reply_text(messages['announcement'], quote=False)
+            await update.message.reply_text(messages['announcement'], do_quote=False)
             if recipient.telegram_id:
                 await context.bot.send_message(recipient.telegram_id, messages['recipient'])
         except CommandSyntaxError:
