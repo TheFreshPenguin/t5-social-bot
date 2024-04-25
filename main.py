@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from helpers.access_checker import AccessChecker
 from helpers.visit_calculator import VisitCalculator
 from helpers.points import Points
+from helpers.chat_target import ChatTarget
 
 from integrations.loyverse.api import LoyverseApi
 from integrations.google.sheet_database import GoogleSheetDatabase
@@ -35,8 +36,8 @@ class MainConfig:
         self.telegram_token = os.getenv('telegram_token')
         self.loyverse_token = os.getenv('loyverse_token')
         self.loyverse_read_only = bool(int(os.getenv('loyverse_read_only', 0)))
-        self.announcement_chats = set([int(chatid) for chatid in os.getenv('announcement_chats', '').split(',') if chatid])
-        self.admin_chats = set([int(chatid) for chatid in os.getenv('admin_chats', '').split(',') if chatid])
+        self.announcement_chats = ChatTarget.parse_multi(os.getenv('announcement_chats', ''))
+        self.admin_chats = ChatTarget.parse_multi(os.getenv('admin_chats', ''))
         self.birthday_points = Points(os.getenv('birthday_points', 5))
         self.timezone = pytz.timezone(os.getenv('timezone', 'Europe/Bucharest'))
         self.masters = set([username for username in os.getenv('masters', '').split(',') if username])

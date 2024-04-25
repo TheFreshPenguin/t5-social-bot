@@ -10,6 +10,7 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 from modules.base_module import BaseModule
 from helpers.access_checker import AccessChecker
 from helpers.exceptions import UserFriendlyError
+from helpers.chat_target import ChatTarget
 from data.repositories.event import EventRepository
 from data.models.event import Event
 
@@ -17,12 +18,12 @@ logger = logging.getLogger(__name__)
 
 
 class EventsModule(BaseModule):
-    def __init__(self, ac: AccessChecker, repository: EventRepository, timezone: pytz.timezone = None, upcoming_days: int = 6, admin_chats: set[int] = None):
+    def __init__(self, ac: AccessChecker, repository: EventRepository, timezone: pytz.timezone = None, upcoming_days: int = 6, admin_chats: set[ChatTarget] = None):
         self.ac = ac
         self.repository = repository
         self.timezone = timezone
         self.upcoming_days = upcoming_days
-        self.admin_chats: set[int] = (admin_chats or set()).copy()
+        self.admin_chats: set[ChatTarget] = (admin_chats or set()).copy()
 
     def install(self, application: Application) -> None:
         application.add_handlers([
@@ -86,8 +87,8 @@ class EventsModule(BaseModule):
         else:
             announcement = f"⚠️ There are no upcoming events in the next {self.upcoming_days + 1} days. Remember to add some in the Google sheet! ⚠️"
 
-        for chat_id in self.admin_chats:
-            await context.bot.send_message(chat_id, announcement, parse_mode=ParseMode.HTML)
+        for target in self.admin_chats:
+            await context.bot.send_message(target.chat_id, announcement, parse_mode=ParseMode.HTML, message_thread_id=target.thread_id)
 
     def _format_today(self, now: datetime) -> str:
         events = self.repository.get_events_on(now)
