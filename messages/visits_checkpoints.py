@@ -25,6 +25,13 @@ visits_checkpoints = {
         "You've reached the 'Ten-Time Wonder' status. If we had a red carpet, it would be rolled out just for you. You're the VIP of VIPs!",
         "We're not sure if you're a guest or a magician, but either way, you've just pulled off the 'Ten-Time Sorcery'."
     ]),
+    15: MessageBag([
+        "Hold onto your hats – you've entered the realm of the 'Fifteen-Time Fanatics.' Your commitment to T5 socializing is simply awe-inspiring!",
+        "Bravo! You've achieved the 'Fifteen-Visit Fiesta' status. At this point, we're pretty sure you know every nook and cranny of our hostel better than we do!",
+        "Alert the history books – you're now a member of the 'Fifteen-Timer's Club.' Your visits have become legendary tales whispered among travelers!",
+        "Unbelievable! You've reached the 'Fifteen-Time Trailblazer' level. If there were a trophy for hostel exploration, it would have your name engraved on it!",
+        "Congratulations! You've unlocked the 'Fifteen-Frequent Flyer' achievement. Your dedication to adventure knows no bounds – we're honored to be a part of your journey!",
+    ]),
     20: MessageBag([
         "Epic alert! You've reached the 'Double-Deca-Dynamo' status. We're pretty sure you're part-time staff at this point – any chance you can start tomorrow?",
         "We bow down to the 'Hostel Guru.' Twenty visits? You're not a champion; you're part of the furniture – in a good way!",
