@@ -25,6 +25,7 @@ from modules.birthday import BirthdayModule
 from modules.events import EventsModule
 from modules.visits import VisitsModule
 from modules.tasks import TasksModule
+from modules.announcements import AnnouncementsModule
 from modules.tracking import TrackingModule
 
 load_dotenv()
@@ -41,6 +42,7 @@ class MainConfig:
         self.announcement_chats = ChatTarget.parse_multi(os.getenv('announcement_chats', ''))
         self.admin_chats = ChatTarget.parse_multi(os.getenv('admin_chats', ''))
         self.tasks_chats = ChatTarget.parse_multi(os.getenv('tasks_chats', ''))
+        self.team_schedule_chats = ChatTarget.parse_multi(os.getenv('team_schedule_chats', ''))
         self.birthday_points = Points(os.getenv('birthday_points', 5))
         self.timezone = pytz.timezone(os.getenv('timezone', 'Europe/Bucharest'))
         self.masters = set([username for username in os.getenv('masters', '').split(',') if username])
@@ -90,6 +92,7 @@ def main() -> None:
         ),
         EventsModule(repository=event_repository, timezone=config.timezone, ac=ac, admin_chats=config.admin_chats),
         TasksModule(tasks=task_repository, tasks_chats=config.tasks_chats, timezone=config.timezone),
+        AnnouncementsModule(team_schedule_chats=config.team_schedule_chats, timezone=config.timezone),
         TrackingModule(users=user_repository, timezone=config.timezone),
     ]
 
