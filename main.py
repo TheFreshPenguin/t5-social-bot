@@ -15,6 +15,7 @@ from integrations.loyverse.api import LoyverseApi
 from integrations.google.sheet_database import GoogleSheetDatabase
 from integrations.google.sheet_event_repository import GoogleSheetEventRepository
 from integrations.google.sheet_user_repository import GoogleSheetUserRepository
+from integrations.google.sheet_task_repository import GoogleSheetTaskRepository
 
 from modules.help import HelpModule
 from modules.points import PointsModule
@@ -23,6 +24,7 @@ from modules.raffle import RaffleModule
 from modules.birthday import BirthdayModule
 from modules.events import EventsModule
 from modules.visits import VisitsModule
+from modules.tasks import TasksModule
 from modules.tracking import TrackingModule
 
 load_dotenv()
@@ -38,6 +40,7 @@ class MainConfig:
         self.loyverse_read_only = bool(int(os.getenv('loyverse_read_only', 0)))
         self.announcement_chats = ChatTarget.parse_multi(os.getenv('announcement_chats', ''))
         self.admin_chats = ChatTarget.parse_multi(os.getenv('admin_chats', ''))
+        self.tasks_chats = ChatTarget.parse_multi(os.getenv('tasks_chats', ''))
         self.birthday_points = Points(os.getenv('birthday_points', 5))
         self.timezone = pytz.timezone(os.getenv('timezone', 'Europe/Bucharest'))
         self.masters = set([username for username in os.getenv('masters', '').split(',') if username])
@@ -59,6 +62,7 @@ def main() -> None:
 
     event_repository = GoogleSheetEventRepository(database, config.timezone)
     user_repository = GoogleSheetUserRepository(database, config.timezone)
+    task_repository = GoogleSheetTaskRepository(database, config.timezone)
 
     loy = LoyverseApi(config.loyverse_token, users=user_repository, read_only=config.loyverse_read_only)
     ac = AccessChecker(
@@ -85,6 +89,7 @@ def main() -> None:
             timezone=config.timezone,
         ),
         EventsModule(repository=event_repository, timezone=config.timezone, ac=ac, admin_chats=config.admin_chats),
+        TasksModule(tasks=task_repository, tasks_chats=config.tasks_chats, timezone=config.timezone),
         TrackingModule(users=user_repository, timezone=config.timezone),
     ]
 
