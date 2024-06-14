@@ -11,6 +11,7 @@ from modules.base_module import BaseModule
 from helpers.access_checker import AccessChecker
 from helpers.exceptions import UserFriendlyError, CommandSyntaxError
 from helpers.points import Points
+from helpers.chat_target import ChatTarget
 
 from messages import donate_sarcasm
 
@@ -23,11 +24,11 @@ logger = logging.getLogger(__name__)
 class DonateModule(BaseModule):
     HELP_TEXT = "To use this command you need to write it like this:\n/donate name points\nFor example:\n/donate Moni G 5"
 
-    def __init__(self, loy: LoyverseApi, ac: AccessChecker, users: UserRepository, announcement_chats: set[int] = None):
+    def __init__(self, loy: LoyverseApi, ac: AccessChecker, users: UserRepository, announcement_chats: set[ChatTarget] = None):
         self.loy: LoyverseApi = loy
         self.ac: AccessChecker = ac
         self.users: UserRepository = users
-        self.announcement_chats: set[int] = (announcement_chats or set()).copy()
+        self.announcement_chats: set[ChatTarget] = (announcement_chats or set()).copy()
 
     def install(self, application: Application) -> None:
         application.add_handlers([
@@ -83,7 +84,7 @@ class DonateModule(BaseModule):
 
             messages = DonateModule._make_donation_messages(sender, recipient, points)
 
-            await update.message.reply_text(messages['announcement'], quote=False)
+            await update.message.reply_text(messages['announcement'], do_quote=False)
             if recipient.telegram_id:
                 await context.bot.send_message(recipient.telegram_id, messages['recipient'])
         except CommandSyntaxError:
@@ -157,8 +158,8 @@ class DonateModule(BaseModule):
             if recipient.telegram_id:
                 await context.bot.send_message(recipient.telegram_id, messages['recipient'])
             else:
-                for chat_id in self.announcement_chats:
-                    await context.bot.send_message(chat_id, messages['announcement'])
+                for target in self.announcement_chats:
+                    await context.bot.send_message(target.chat_id, messages['announcement'], message_thread_id=target.thread_id)
         except UserFriendlyError as e:
             await update.callback_query.answer()
             await update.callback_query.edit_message_text(str(e))

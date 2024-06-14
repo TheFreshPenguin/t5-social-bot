@@ -13,6 +13,7 @@ from data.repositories.user import UserRepository
 from modules.base_module import BaseModule
 from helpers.access_checker import AccessChecker
 from helpers.points import Points
+from helpers.chat_target import ChatTarget
 
 from messages import birthday_congratulations
 
@@ -28,12 +29,12 @@ Enjoy {points} Loyalty Points from T5 🎁
 """
 
 class BirthdayModule(BaseModule):
-    def __init__(self, loy: LoyverseApi, ac: AccessChecker, users: UserRepository, announcement_chats: set[int] = None, admin_chats: set[int] = None, points_to_award: Points = Points(5), timezone: Optional[pytz.timezone] = None):
+    def __init__(self, loy: LoyverseApi, ac: AccessChecker, users: UserRepository, announcement_chats: set[ChatTarget] = None, admin_chats: set[ChatTarget] = None, points_to_award: Points = Points(5), timezone: Optional[pytz.timezone] = None):
         self.loy: LoyverseApi = loy
         self.ac: AccessChecker = ac
         self.users: UserRepository = users
-        self.announcement_chats: set[int] = (announcement_chats or set()).copy()
-        self.admin_chats: set[int] = (admin_chats or set()).copy()
+        self.announcement_chats: set[ChatTarget] = (announcement_chats or set()).copy()
+        self.admin_chats: set[ChatTarget] = (admin_chats or set()).copy()
         self.points_to_award: Points = points_to_award
         self.timezone: Optional[pytz.timezone] = timezone
 
@@ -86,8 +87,8 @@ class BirthdayModule(BaseModule):
             points=self.points_to_award
         )
 
-        for chat_id in self.announcement_chats:
-            await context.bot.send_message(chat_id, announcement)
+        for target in self.announcement_chats:
+            await context.bot.send_message(target.chat_id, announcement, message_thread_id=target.chat_id)
 
     async def _announce_advance_birthdays(self, context: ContextTypes.DEFAULT_TYPE) -> None:
         if not self.admin_chats:
@@ -116,8 +117,8 @@ class BirthdayModule(BaseModule):
         else:
             announcement = "Unlikely as it is, there are no upcoming birthdays in the next couple of weeks."
 
-        for chat_id in self.admin_chats:
-            await context.bot.send_message(chat_id, announcement, parse_mode=ParseMode.HTML)
+        for target in self.admin_chats:
+            await context.bot.send_message(target.chat_id, announcement, parse_mode=ParseMode.HTML, message_thread_id=target.thread_id)
 
     def _get_birthdays_in_range(self, start: date, span: range) -> dict[date, list[User]]:
         birthdays = {day: self.users.get_by_birthday(day) for day in (start + timedelta(days=n) for n in span)}

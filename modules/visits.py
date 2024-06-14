@@ -142,7 +142,7 @@ class VisitsModule(BaseModule):
                 if user.telegram_id:
                     max_checkpoint = max(checkpoints.keys())
                     messages = visits_checkpoints.get(max_checkpoint, [])
-                    message = (messages.random + "\n\n") if messages else None
+                    message = (messages.random + "\n\n") if messages else ''
                     month_text = 'this month' if month.month == right_now.month else f"in {month.strftime('%B')}"
                     announcement = f"{message}Because you visited us on {max_checkpoint} occasions {month_text}, we want to thank you for your persistence with {a_total_of}{total_points} point{total_points.plural}!"
                     await context.bot.send_message(user.telegram_id, announcement)
