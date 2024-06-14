@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from helpers.access_checker import AccessChecker
 from helpers.visit_calculator import VisitCalculator
 from helpers.points import Points
+from helpers.raffle import Raffle
 from helpers.chat_target import ChatTarget
 
 from integrations.loyverse.api import LoyverseApi
@@ -16,6 +17,7 @@ from integrations.google.sheet_database import GoogleSheetDatabase
 from integrations.google.sheet_event_repository import GoogleSheetEventRepository
 from integrations.google.sheet_user_repository import GoogleSheetUserRepository
 from integrations.google.sheet_task_repository import GoogleSheetTaskRepository
+from integrations.google.sheet_raffle_repository import GoogleSheetRaffleRepository
 
 from modules.help import HelpModule
 from modules.points import PointsModule
@@ -65,6 +67,7 @@ def main() -> None:
     event_repository = GoogleSheetEventRepository(database, config.timezone)
     user_repository = GoogleSheetUserRepository(database, config.timezone)
     task_repository = GoogleSheetTaskRepository(database, config.timezone)
+    raffle_repository = GoogleSheetRaffleRepository(database, config.timezone)
 
     loy = LoyverseApi(config.loyverse_token, users=user_repository, read_only=config.loyverse_read_only)
     ac = AccessChecker(
@@ -76,11 +79,13 @@ def main() -> None:
         checkpoints=config.visits_to_points
     )
 
+    raffle = Raffle(loy, entries=raffle_repository, title="Euro 2024 Sweepstakes", ticket_price=Points(5), max_tickets=3)
+
     modules = [
         PointsModule(loy=loy, users=user_repository),
         DonateModule(loy=loy, ac=ac, users=user_repository, announcement_chats=config.announcement_chats),
         VisitsModule(loy=loy, users=user_repository, vc=vc, timezone=config.timezone),
-        RaffleModule(loy=loy, ac=ac, users=user_repository),
+        RaffleModule(raffle=raffle, users=user_repository),
         BirthdayModule(
             loy=loy,
             ac=ac,

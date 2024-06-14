@@ -35,6 +35,10 @@ class GoogleSheetUserRepository(UserRepository):
         self.database = database
         database.users.subscribe(self._load)
 
+    def get_by_full_name(self, full_name: str) -> Optional[User]:
+        with self.lock.gen_rlock():
+            return self.users_by_full_name.get(full_name, Handle(None)).inner
+
     def get_by_telegram_id(self, telegram_id: int) -> Optional[User]:
         with self.lock.gen_rlock():
             return self.users_by_telegram_id.get(telegram_id, Handle(None)).inner

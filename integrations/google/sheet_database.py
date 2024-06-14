@@ -21,6 +21,7 @@ class GoogleSheetDatabase:
         self._events = self._table_data('Events')
         self._users = self._table_data('Community')
         self._tasks = self._tasks_data('Team Checklist')
+        self._raffle = self._table_data('Raffle')
 
         self.refresh()
 
@@ -36,8 +37,15 @@ class GoogleSheetDatabase:
     def tasks(self) -> Observable:
         return self._tasks
 
+    @property
+    def raffle(self) -> Observable:
+        return self._raffle
+
     def save_users(self, key_name: str, data: dict[str, dict[str,str]]) -> None:
         self._update_sheet_data('Community', key_name, data)
+
+    def add_raffle_entry(self, data: dict[str, str]) -> None:
+        self._add_sheet_row('Raffle', data)
 
     def check_task(self, task: dict[str,str]) -> None:
         try:
@@ -66,6 +74,26 @@ class GoogleSheetDatabase:
                 if task['name'] == name and task['time'] == time:
                     worksheet.update_cell(i + 1, start + 2 + 1, task['is_done'])
                     return
+        except Exception as e:
+            logger.exception(e)
+
+    def _add_sheet_row(self, sheet_name: str, data: dict[str,str]):
+        try:
+            # Load the data from Google
+            spreadsheet = self._load_spreadsheet()
+            worksheet = self._load_worksheet(spreadsheet, sheet_name)
+            raw = self._load_values(worksheet)
+
+            header = raw[0]
+
+            # Map the header keys to their column numbers - instead of A, B, C we use 0, 1, 2
+            columns = {GoogleSheetDatabase._header_to_key(h): i for i, h in enumerate(header)}
+
+            # Map the data entries to their column numbers
+            updates_by_column = {columns[k]: v for k, v in data.items() if k in columns}
+
+            # We add 1 to the row to account for the headers
+            GoogleSheetDatabase._add_row(worksheet, updates_by_column)
         except Exception as e:
             logger.exception(e)
 
@@ -102,6 +130,10 @@ class GoogleSheetDatabase:
     def _update_row(worksheet: gspread.Worksheet, row_number: int, updates_by_column: dict[int, str]) -> None:
         for k, v in updates_by_column.items():
             worksheet.update_cell(row_number + 1, k + 1, v)  # Coordinates start at 1
+
+    @staticmethod
+    def _add_row(worksheet: gspread.Worksheet, data_by_column: dict[int, str]) -> None:
+        worksheet.append_row(list(dict(sorted(data_by_column.items())).values()))
 
     def refresh(self) -> None:
         logger.info('Refreshing Google Sheets data')
