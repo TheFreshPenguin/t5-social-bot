@@ -47,19 +47,11 @@ class RaffleModule(BaseModule):
             CommandHandler("start", self._help, filters.Regex('raffle')),
             CommandHandler("euro", self._initiate),
 
-            CallbackQueryHandler(self._button_clicked)
+            CallbackQueryHandler(self._help, pattern="^raffle/help"),
+            CallbackQueryHandler(self._buy, pattern="^raffle/buy"),
+            CallbackQueryHandler(self._list_entries, pattern="^raffle/list_entries"),
         ])
         logger.info(f"Raffle module installed")
-
-    async def _button_clicked(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        query = update.callback_query
-
-        if query.data == "raffle/help":
-            await self._help(update, context)
-        elif query.data == "raffle/buy":
-            await self._buy(update, context)
-        elif query.data == "raffle/list_entries":
-            await self._list_entries(update, context)
 
     async def _initiate(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if update.effective_chat.type == ChatType.PRIVATE:
