@@ -5,6 +5,9 @@ from data.models.user import User
 
 
 class UserRepository:
+    def get_by_full_name(self, full_name: str) -> Optional[User]:
+        pass
+
     def get_by_telegram_id(self, telegram_id: int) -> Optional[User]:
         pass
 
